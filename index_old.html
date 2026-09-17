@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <base href=".">
+  <meta charset="UTF-8">
+  <title>Box Selection</title>
+  
+  <script src="https://cdn.polyfill.io/v3/polyfill.min.js?features=fetch,requestAnimationFrame,Element.prototype.classList,TextDecoder"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/3.18.3/minified.js"></script>
+  <!-- <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script> -->
+  <script src="./dist/html2canvas.js"></script>
+  <script src="./dist/html2canvas.min.js"></script>
+  <script type="text/javascript">
+
+        var road_new="";
+        var jrdcn_new="";
+  </script>
+  <script type="module" src="./main.js"></script>
+  <style>
+    .map {
+      width: 100%;
+      height: 100vh;
+    }
+
+    .map:-webkit-full-screen {
+      height: 100%;
+      margin: 0;
+    }
+
+    .map:-ms-fullscreen {
+      height: 100%;
+    }
+
+    .map:fullscreen {
+      height: 100%;
+    }
+
+    .ol-dragbox {
+      background-color: rgba(255, 255, 255, 0.4);
+      border-color: rgba(100, 150, 0, 1);
+    }
+
+    .ol-popup {
+      position: absolute;
+      background-color: rgb(66, 62, 62);
+      color: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #cccccc;
+      bottom: 12px;
+      left: -50px;
+      min-width: 280px;
+     
+    }
+
+    .ol-popup:after,
+    .ol-popup:before {
+      top: 100%;
+      border: solid transparent;
+      content: " ";
+      height: 0;
+      width: 0;
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .ol-popup:after {
+      border-top-color: white;
+      border-width: 10px;
+      left: 48px;
+      margin-left: -10px;
+    }
+
+    .ol-popup:before {
+      border-top-color: #cccccc;
+      border-width: 11px;
+      left: 48px;
+      margin-left: -11px;
+    }
+
+    .ol-popup-closer {
+      text-decoration: none;
+      position: absolute;
+      top: 2px;
+      right: 8px;
+    }
+
+    .ol-popup-closer:after {
+      content: 'X';
+    }
+
+    .list {
+      /* float: right; */
+      z-index: 1;
+      position: absolute;
+      left: 20px;
+      top: 220px;
+      background-color: black;
+      background: black;
+      color: azure !important;
+      padding: 12px;
+
+    }
+
+    .hide_label {
+      visibility: hidden;
+    }
+
+
+
+    /* STYLE F */
+
+.checkbox.style-f {
+  display: inline-block;
+  position: relative;
+  padding-left: 30px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.checkbox.style-f input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+.checkbox.style-f input:checked ~ .checkbox__checkmark {
+  background-color: #eee;
+}
+.checkbox.style-f input:checked ~ .checkbox__checkmark:after {
+  transform: scale(1);
+}
+.checkbox.style-f input:checked ~ .checkbox__body {
+  font-weight: bold;
+}
+.checkbox.style-f:hover input ~ .checkbox__checkmark {
+  background-color: #eee;
+}
+.checkbox.style-f:hover input:checked ~ .checkbox__checkmark {
+  background-color: #eee;
+}
+.checkbox.style-f .checkbox__checkmark {
+  position: absolute;
+  top: 1px;
+  left: 0;
+  height: 22px;
+  width: 22px;
+  background-color: #eee;
+  transition: background-color 0.25s ease;
+  border-radius: 11px;
+}
+.checkbox.style-f .checkbox__checkmark:after {
+  content: "";
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 22px;
+  height: 22px;
+  display: block;
+  background-color: #f7cb15;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.25s ease;
+}
+.checkbox.style-f .checkbox__body {
+  color: #333;
+  line-height: 1.4;
+  font-size: 16px;
+  transition: font-weight 0.25s ease;
+}
+  
+  </style>
+
+
+</head>
+
+<body>
+  <div id="loading_halt_panel" style="z-index: 1065; position: fixed; top: 0%; left: 0%; width: 100%; height: 100%; visibility: hidden; background: black; opacity: .6">
+    <br> <br> <br> <br> <br> <br> <br>
+    <br> <br> <br> <br>
+    <center>
+      <b style="color: black; background-color: white;"> <!-- Page loading please wait ... -->
+      </b>
+    </center>
+
+    <div class="sk-cube-grid" id="loading_halt_panel"
+      style="position: absolute;">
+      <div class="sk-cube sk-cube1"></div>
+      <div class="sk-cube sk-cube2"></div>
+      <div class="sk-cube sk-cube3"></div>
+      <div class="sk-cube sk-cube4"></div>
+      <div class="sk-cube sk-cube5"></div>
+      <div class="sk-cube sk-cube6"></div>
+      <div class="sk-cube sk-cube7"></div>
+      <div class="sk-cube sk-cube8"></div>
+      <div class="sk-cube sk-cube9"></div>
+    </div>
+
+
+  </div>
+
+
+
+
+  <div id="map" class="map">    
+    <div id="divselect" className="ol-control"
+      style="position: absolute; z-index: 2; right:4.6%; top:20%; bottom: 0px; display: block; min-height: 100px; max-height: 500px; overflow-y: auto;">
+      <select name="division_sel" id="division_sel">
+        <option value="NA">Select Division</option>
+        <option title="125" value="AMPATI">AMPATI</option>
+        <option title="112" value="MAIRANG">MAIRANG</option>
+        <option title="115" value="NEC_KHLIEHRIAT">NEC_KHLIEHRIAT</option>
+      </select>
+      
+    </div>
+    <a id="image-download" download="map.png"></a>
+    <div id="legenddiv" className="ol-control"
+      style="position: absolute; z-index: 2; right:10px; bottom: 0px; display: block; min-height: 100px; max-height: 200px; overflow-y: auto;">
+      <!-- <span>Legend:</span> <img id="legend" /> -->
+      <button id="capture">capture</button>
+    </div>
+
+    <div style="position: absolute; z-index: 2; left:10px; top:90px; color: white;">
+      <!-- <label for="track">
+          Track
+          <input id="track" type="checkbox" />
+      </label> -->
+      <div class="checkboxes__row">
+        <div class="checkboxes__item">
+          <label class="checkbox style-f">
+            <input type="checkbox" id="track"/>
+            <div class="checkbox__checkmark"></div>
+            <div class="checkbox__body">Style F</div>
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="accordionExample" class="list" style="position:absolute;top:0px;">
+      <table Cellspacing=3 >
+       
+        <input type="text" id="jrdcnidfordb"/>    
+        <input type="text" id="roadidfordb"/>
+
+       <tr><td colspan="=2">
+        <table Cellspacing=3 id="aditional">
+        <tr>
+          <td>MPRDC_1</td>
+          <td> <input  type="checkbox" value="https://mprams.in:6443/arcgis/rest/services/mprams/zoom/MapServer^MPRDC_1$ARCGIS$NA" /></td>          
+        </tr>
+        <tr>
+          <td>DISTRICT</td>
+          
+          <td> <input  type="checkbox" value="https://mprams.in:6443/arcgis/rest/services/mprams_additional_layer/District/MapServer^DISTRICT$ARCGIS$NA" />
+            <input type="range" min="0" max="100" value="100"  />
+          </td>          
+        </tr>
+        <tr>
+          <td>GEOLayer</td>
+          <td><input  type="checkbox" value="http://103.219.61.73/geoserver/megrams/wms^GEOlayer$GEOSERVER$megrams:meghalaya_district" />
+            <input type="range" min="0" max="100" value="100"  />
+          </td>
+        </tr>
+       </table>
+
+       </td>
+      
+      </tr>
+        
+
+        <tr><td><input type="text" id="lattext" value="27.17500159774926"/></td><td><input type="text" id="lontext" value="78.04215292569894"/></td></tr>
+        <tr><td colspan="2"><input type="button" id="latlonlocatebutton" value="Locate"/><input type="button" id="latlonlocateclearbutton" value="Clear"/></td></tr>
+        <tr><td colspan="2"><select style="width: 100%;" id="advance_query_layer"></select></td></tr>
+        <tr><td colspan="2"><select style="width: 100%;" id="advance_query_attrib"  size="5"></select></td>
+         </tr>
+         <tr><td colspan="2"><input type="button" id="getvalue"/></td></tr>
+         <tr>
+           <td colspan="2" id="advance_query_formula_btn">
+
+                          <input  type="button" value="="/>
+                          <input  type="button" value="!="/>
+                          <input  type="button" value=">"/>
+                          <input  type="button" value="<"/>
+                          <input  type="button" value=">="/>
+                          <input  type="button" value="<="/>
+                          <input  type="button" value=">="/>
+                          <input  type="button" value="Like"/>
+                          <input  type="button" value="'"/>
+                          <input  type="button" value="And"/>
+                          <input  type="button" value="Or"/>
+							       			
+
+           </td>
+         </tr>
+        <tr><td><textarea id="advance_query_box"></textarea></td>
+          <td>
+            <input type="button" value="go" id="advance_query_run"/>
+            <input type="button" value="clear" id="advance_query_clear"/>
+          </td>
+        </tr>
+        <tr><td colspan="2">
+
+          <select id="advance_query_result" class="form-select" multiple="multiple" style="width:100%; min-height:100px;max-height:100px;">
+            
+          </select>
+
+
+        </td></tr>
+        <tr>
+          <td colspan="2"><b style='color:orange;'>Road</b></td>
+        </tr>
+        <tr>
+          <td colspan="2"></td>
+        </tr>
+        <tr>
+          <td><label for="sh">State Highway</label></td>
+          <td> <input id="sh" type="checkbox" value="test" /></td>
+        </tr>
+
+        <tr>
+          <td><label for="mdr">Major District Road</label></td>
+          <td> <input id="mdr" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="ur">Urban Road</label></td>
+          <td> <input id="ur" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="odr">Other District Road</label></td>
+          <td> <input id="odr" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="lr">Local Road</label></td>
+          <td> <input id="lr" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="nh">NH</label></td>
+          <td> <input id="nh" type="checkbox" value="test" /></td>
+        </tr>
+
+        <tr>
+          <td><label for="traceroad">Trace Road</label></td>
+          <td> <input id="traceroad" type="checkbox" value="trace" /></td>
+        </tr>
+        <tr>
+          <td><label for="drawpoint">Draw Growth Point</label></td>
+          <td> <input id="drawpoint" type="checkbox" value="drawpoint" /></td>
+        </tr>
+        <tr>
+          <td><label for="viewgrowthpoint">View Growth Point</label></td>
+          <td> <input id="viewgrowthpoint" type="checkbox" value="viewgrowthpoint" /></td>
+        </tr>
+        <tr>
+          <td><label for="viewslope">View Slope</label></td>
+          <td> <input id="viewslope" type="checkbox" value="viewslope" /></td>
+        </tr>
+        <tr>
+          <td><label for="viewroadimportance">View Road Importance</label></td>
+          <td> <input id="viewroadimportance" type="checkbox" value="viewroadimportance" /></td>
+        </tr>
+        <tr><td colspan="2">
+
+          <button style="display: none;"
+										id="getfacilityforroadimportance">Facility</button></td>
+
+        </td></tr>
+        <tr>
+          <td><label for="viewroadimportanceradius">View Road Importance (km)</label></td>
+          <td> <input id="viewroadimportanceradius" type="text" value="2" /></td>
+        </tr>
+        <tr>
+           <td colspan="2">
+            <table width="60%">
+          <tr style="background-color: white;color: black;">
+              <td class="ecis_road_code">0</td>
+              <td class="ecis_calculated_chainage" data="st">0</td>
+              <td class="ecis_calculated_chainage" data="ed">0</td>
+          </tr>
+         <tr><td><input type="button" id="ecis_add_road_segment" value="Add Segment"/></td></tr>
+          </table>
+           </td>
+        </tr>
+        <tr>
+          <td><label for="getrevchainage">Chianage</label></td>
+          <td> <input id="getrevchainage" type="checkbox" value="getrevchainage" /></td>
+        </tr>
+
+        <tr> <td><input type="text" id="radius" value="2" /></td></tr>
+        <tr>
+          <td>
+            <input type="text" id="growth_lon"  />
+            <input type="text" id="growth_lat"  />
+          
+          </td>
+
+        </tr>
+        <tr>
+          <td>
+            
+           <input type="button" id="getfacility" />
+          
+          </td>
+
+        </tr>
+        <tr>
+          <td colspan="2"><b style='color:orange;'>Assets</b></td>
+        </tr>
+        <tr>
+          <td colspan="2"></td>
+        </tr>
+        <tr>
+          <td><label for="ri">Road Inventory</label></td>
+          <td> <input id="ri" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="roug">Road Roughness</label></td>
+          <td> <input id="roug" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="bridge">Bridge</label></td>
+          <td> <input id="bridge" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="bridgerating">Bridge Rating</label></td>
+          <td> <input id="bridgerating" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="bxslab">Box/Slab Culvert</label></td>
+          <td><input id="bxslab" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="culvert">Culvert</label></td>
+          <td> <input id="culvert" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="row">Right of Way</label></td>
+          <td> <input id="row" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="trfcdistr">Traffic Distribution</label></td>
+          <td> <input id="trfcdistr" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="workhistory">Work History</label></td>
+          <td> <input id="workhistory" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+        <tr>
+          <td><label for="trfcstn">Traffic Station</label></td>
+          <td> <input id="trfcstn" type="checkbox" value="test" /></td>
+        </tr>
+          <td colspan="2"><b style='color:orange;'>Tools</b><br></td>
+        </tr>
+        <tr>
+          <td colspan="2"><label for="road_search_box">Search by Road Code</label></td>
+        </tr>
+        <tr>
+          <td colspan="2"><input style="width: 95%;" id="road_search_box_new" type="textbox" value="2084" /></td>
+        </tr>
+        <tr>
+          <td align="center" colspan="2"><input id="road_search_btn" type="button" value="Search" /></td>
+        </tr>
+        <tr>
+          <td align="center" colspan="2"><input id="road_search_clear_btn" type="button" value="Clear" /></td>
+        </tr>
+
+        <tr>
+          <td align="center" colspan="2"><input id="filter_search" type="button" value="Search" /></td>
+        </tr>
+        <tr>
+          <td align="center" colspan="2"><input id="filter_clear" type="button" value="Clear" /></td>
+        </tr>
+
+        <tr>
+          <td colspan="2" style="width: 95%;">
+            <table id="measurment_tool" bgcolor="#0000" style="width: 100%;">
+              <tr>
+                <td align="center"><label for="type">Measurment Tool </label></td>
+              </tr>
+              <tr>
+                <td>
+                  <select id="type">
+                    <option value="length">Length (LineString)</option>
+                    <option value="area">Area (Polygon)</option>
+                  </select>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr >
+        <td>
+         <label for="format">Measurment Tool </label>
+        </td>
+        <td>
+          <select id="type" style="width: 100%;">
+            <option value="length">Length (LineString)</option>
+            <option value="area">Area (Polygon)</option>
+          </select>
+        </td>
+      </tr>
+
+        <tr>
+          <td>
+            <label for="format">Page size </label>
+          </td>
+          <td>
+            <select id="format" style="width: 100%;">
+              <option value="a0">A0 (slow)</option>
+              <option value="a1">A1</option>
+              <option value="a2">A2</option>
+              <option value="a3">A3</option>
+              <option value="a4" selected>A4</option>
+              <option value="a5">A5 (fast)</option>
+            </select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <label for="resolution">Resolution </label>
+          </td>
+          <td>
+            <select id="resolution" style="width: 100%;">
+              <option value="72">72 dpi (fast)</option>
+              <option value="150">150 dpi</option>
+              <option value="200" selected>200 dpi</option>
+              <option value="300">300 dpi (slow)</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="scale">Scale </label>
+          </td>
+          <td>
+            <select id="scale" style="width: 100%;">
+              <option value="500">1:500000</option>
+              <option value="250" selected>1:250000</option>
+              <option value="100">1:100000</option>
+              <option value="50">1:50000</option>
+              <option value="25">1:25000</option>
+              <option value="10">1:10000</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td align="center" colspan="2"><button id="export-pdf">Export PDF</button></td>
+        </tr>
+
+      </table>
+
+
+    </div>
+
+    <div id="popup" class="ol-popup">
+      <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+      <table border="1" width="100%">
+        <tr><td><div id="popup-content"></div></td></tr>
+        <tr><td><video id="video_src"/></td></tr>
+        <tr><td align="center"><image id="asset_image" src="images/RI_3006_p_128.jpg" style="width:100%;" /></td></tr>
+        <tr><td><table><tr><td id="asset_image_list">
+
+          <div style="overflow:scroll;overflow-y: hidden;width:250px;"><table><tbody><tr classname="doclist_url"><td><b data="24" title="BRDG_6_test_edch_116.jpg" style="cursor:pointer;">&nbsp;1&nbsp;</b></td><td><b data="19" title="RI_78_bov3mwty_101.png" style="cursor:pointer;">&nbsp;2&nbsp;</b></td><td><b data="0,0,1206" title="RI_48_testroad_80.mp4" style="cursor:pointer;">&nbsp;3&nbsp;</b></td><td><b data="0,0,1206" title="BRDG_6_testroad_98.mp4" style="cursor:pointer;">&nbsp;4&nbsp;</b></td><td><b data="0,0,1206" title="CUL_4_bus_7.jpg" style="cursor:pointer;">&nbsp;5&nbsp;</b></td><td><b data="1,1,1206" title="BRDG_4_lasa_4.png" style="cursor:pointer;">&nbsp;6&nbsp;</b></td></tr></tbody></table><div>
+
+
+        </td></tr></table></td></tr>
+    </table>
+    <table width="100%" style="font-weight: bold;" id="doctable">
+					
+    </table>
+    </div>
+
+
+    
+
+    <select id="layer-select" style="position: absolute;top:10%;right: 5%;z-index: 9999;">
+      <option value="OSM" selected>Open Street Map</option>
+      <option value="Aerial">Aerial</option>
+      <option value="AerialWithLabelsOnDemand" >Aerial with labels</option>
+      <option value="CanvasDark">Road dark</option>
+     
+    </select>
+
+  </div>
+
+  <div id="large_image_container" style="visibility:hidden;position:fixed;top:2%;right:10%;width: 80%;height:97%;z-index:9999;background-color:white;overflow: scroll;">
+   <b style="color: black;cursor: pointer;position:fixed;right:13%;" id="large_image_container_close">X</b>
+    <table align="center" style="width:70%;height:70%;" >
+      <tr>
+        <td id="large_image" align="center">
+
+        </td>
+      </tr>
+    </table>
+    
+  </div>
+
+  <div id="chainage_panel" style="position:fixed;width:2%;height:2%;left:48%;top:48%;z-index:999;color:magenta;font-weight: bold;">
+    <table>
+     <tr align="right"><td><font style="cursor: pointer;" onclick="{document.getElementById('chainage_panel').style.visibility='hidden';}">X</font></td></tr>
+     <tr align="left"><td><div id="cal_chain">Calculating......</div></td></tr>
+    </table>
+ 
+    </div>
+
+  
+</body>
+
+</html>

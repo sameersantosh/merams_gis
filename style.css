@@ -1,0 +1,36 @@
+@import "node_modules/ol/ol.css";
+
+html, body {
+  margin: 0;
+  height: 100%;
+}
+#map {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 100%;
+}
+
+
+/* CSS for growing and shrinking effect */
+@keyframes growShrink {
+  0% {
+    transform: scale(1); /* Normal size */
+  }
+  50% {
+    transform: scale(1.5); /* Grow to 1.5 times the size */
+  }
+  100% {
+    transform: scale(1); /* Shrink back to original size */
+  }
+}
+
+/* Circle with growing and shrinking effect */
+.growing-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: red;
+  display: inline-block;
+  animation: growShrink 1.5s infinite ease-in-out;
+}

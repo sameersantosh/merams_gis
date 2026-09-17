@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <base href=".">
+  <meta charset="UTF-8">
+  <title>Box Selection</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.polyfill.io/v3/polyfill.min.js?features=fetch,requestAnimationFrame,Element.prototype.classList,TextDecoder"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/3.18.3/minified.js"></script>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha512-SfTiTlX6kk+qitfevl/7LibUOeJWlt9rbyDn92a1DqWOw9vWG2MFoays0sgObmWazO5BQPiFucnnEAjpAB+/Sw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+
+<script src="https://cdn.jsdelivr.net/npm/ol@latest/dist/ol.js"></script>
+<!-- shpjs -->
+<script src="https://cdn.jsdelivr.net/npm/shpjs@latest/dist/shp.min.js"></script>
+<!-- JSZip -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@latest/dist/jszip.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+  
+  <!-- <script src="https://cdn.polyfill.io/v3/polyfill.min.js?features=fetch,requestAnimationFrame,Element.prototype.classList,TextDecoder"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/core-js/3.18.3/minified.js"></script> -->
+  <!-- <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.3.1/jspdf.umd.min.js"></script> -->
+  <!-- <script src="./dist/html2canvas.js"></script>
+  <script src="./dist/html2canvas.min.js"></script> -->
+  <script type="text/javascript">
+
+        var road_new="";
+        window.jrdcn_new = "";
+
+
+        $(document).on("click", ".plusminus", function(){
+ 
+          if($(this).hasClass("fa fa-list plusminus black")){
+            
+            
+            $(this).removeClass("fa fa-list plusminus black");
+            $(this).addClass("fa fa-list plusminus blue");
+            
+            $("#legenddiv").css("display","block");
+
+          }else if($(this).hasClass("fa fa-list plusminus blue")){
+            
+            
+            $(this).removeClass("fa fa-list plusminus blue");
+            $(this).addClass("fa fa-list plusminus black");
+            
+            $("#legenddiv").css("display","none");
+
+          }
+
+          });
+
+
+          function screenshot(){
+
+            //document.getElementById('mypdf').style.display="block";
+
+
+
+            html2canvas(document.getElementById('mypdf'),{
+              scale: 2,
+              dpi: 600,
+            }).then(function(canvas){
+              //document.body.append(canvas)
+              
+              //$('#canvasoutput').append(canvas);
+              document.getElementById('mypdf').style.display="none";
+              var myImage = canvas.toDataURL("image/jpeg");
+              //var imgWidth =  (canvas.width * 60) / 240;
+              //var imgHeight = (canvas.height * 70) / 240;
+              
+              window.jsPDF = window.jspdf.jsPDF;
+                const imgWidth = 600;
+                const imgHeight = 400;
+                const margin = 10;
+                const doc = new jsPDF("l", "px", "a4");
+                const pageWidth = doc.internal.pageSize.getWidth();
+                console.log("pageWidth", pageWidth);
+                
+                doc.addImage(
+                  myImage,
+                  "PNG",
+                  pageWidth / 2 - imgWidth / 2,
+                  margin,
+                  imgWidth,
+                  imgHeight
+                );
+                doc.save("map.pdf");
+
+
+              // var tWindow = window.open("");
+              // $(tWindow.document.body)
+              //           .html("<img id='Image' src=" + myImage + " style='width:100%;'></img>")
+              //           .ready(function() {
+              //               tWindow.focus();
+              //               tWindow.print();
+              // });
+
+            });
+
+            //document.getElementById('mypdf').style.display="block";
+            //clearRect();
+            $('#mycanvas').empty();
+            //$('#canvasoutput').empty();
+            }
+
+            function collapseSidebar(){
+              
+            }
+
+  </script>
+  <script type="module" src="./main.js"></script>
+  <style>
+    /* .map {
+      width: 100%;
+      height: 100vh;
+    }
+
+    .map:-webkit-full-screen {
+      height: 100%;
+      margin: 0;
+    }
+
+    .map:-ms-fullscreen {
+      height: 100%;
+    }
+
+    .map:fullscreen {
+      height: 100%;
+    }
+
+    .ol-dragbox {
+      background-color: rgba(255, 255, 255, 0.4);
+      border-color: rgba(100, 150, 0, 1);
+    }
+
+    .ol-popup {
+      position: absolute;
+      background-color: rgb(66, 62, 62);
+      color: white;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 10px;
+      border: 1px solid #cccccc;
+      bottom: 12px;
+      left: -50px;
+      min-width: 280px;
+     
+    }
+
+    .ol-popup:after,
+    .ol-popup:before {
+      top: 100%;
+      border: solid transparent;
+      content: " ";
+      height: 0;
+      width: 0;
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .ol-popup:after {
+      border-top-color: white;
+      border-width: 10px;
+      left: 48px;
+      margin-left: -10px;
+    }
+
+    .ol-popup:before {
+      border-top-color: #cccccc;
+      border-width: 11px;
+      left: 48px;
+      margin-left: -11px;
+    }
+
+    .ol-popup-closer {
+      text-decoration: none;
+      position: absolute;
+      top: 2px;
+      right: 8px;
+    }
+
+    .ol-popup-closer:after {
+      content: 'X';
+    }
+
+    .list {
+      z-index: 1;
+      position: absolute;
+      left: 20px;
+      top: 220px;
+      background-color: black;
+      background: black;
+      color: azure !important;
+      padding: 12px;
+
+    }
+
+    .hide_label {
+      visibility: hidden;
+    }
+
+.checkbox.style-f {
+  display: inline-block;
+  position: relative;
+  padding-left: 30px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.checkbox.style-f input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+.checkbox.style-f input:checked ~ .checkbox__checkmark {
+  background-color: #eee;
+}
+.checkbox.style-f input:checked ~ .checkbox__checkmark:after {
+  transform: scale(1);
+}
+.checkbox.style-f input:checked ~ .checkbox__body {
+  font-weight: bold;
+}
+.checkbox.style-f:hover input ~ .checkbox__checkmark {
+  background-color: #eee;
+}
+.checkbox.style-f:hover input:checked ~ .checkbox__checkmark {
+  background-color: #eee;
+}
+.checkbox.style-f .checkbox__checkmark {
+  position: absolute;
+  top: 1px;
+  left: 0;
+  height: 22px;
+  width: 22px;
+  background-color: #eee;
+  transition: background-color 0.25s ease;
+  border-radius: 11px;
+}
+.checkbox.style-f .checkbox__checkmark:after {
+  content: "";
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 22px;
+  height: 22px;
+  display: block;
+  background-color: #f7cb15;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.25s ease;
+}
+.checkbox.style-f .checkbox__body {
+  color: #333;
+  line-height: 1.4;
+  font-size: 16px;
+  transition: font-weight 0.25s ease;
+} */
+  
+  </style>
+
+<style>
+  .map {
+    width: 100%;
+    height: 100vh;
+  }
+
+  .map:-webkit-full-screen {
+    height: 100%;
+    margin: 0;
+  }
+
+  .map:-ms-fullscreen {
+    height: 100%;
+  }
+
+  .map:fullscreen {
+    height: 100%;
+  }
+
+  .ol-dragbox {
+    background-color: rgba(255, 255, 255, 0.4);
+    border-color: rgba(100, 150, 0, 1);
+  }
+
+  .ol-popup {
+    position: absolute;
+    background-color: rgb(66, 62, 62);
+    color: white;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 10px;
+    border: 1px solid #cccccc;
+    bottom: 12px;
+    left: -50px;
+    min-width: 280px;
+   
+  }
+
+  .ol-popup:after,
+  .ol-popup:before {
+    top: 100%;
+    border: solid transparent;
+    content: " ";
+    height: 0;
+    width: 0;
+    position: absolute;
+    pointer-events: none;
+  }
+
+  .ol-popup:after {
+    border-top-color: white;
+    border-width: 10px;
+    left: 48px;
+    margin-left: -10px;
+  }
+
+  .ol-popup:before {
+    border-top-color: #cccccc;
+    border-width: 11px;
+    left: 48px;
+    margin-left: -11px;
+  }
+
+  .ol-popup-closer {
+    text-decoration: none;
+    position: absolute;
+    top: 2px;
+    right: 8px;
+  }
+
+  .ol-popup-closer:after {
+    content: 'X';
+  }
+
+  .list {
+    /* float: right; */
+    z-index: 1;
+    position: absolute;
+    left: 20px;
+    top: 220px;
+    background-color: black;
+    background: black;
+    color: azure !important;
+    padding: 12px;
+
+  }
+
+  .hide_label {
+    visibility: hidden;
+  }
+
+
+  .abc{
+
+    color: green;
+  }
+  input[type="checkbox"] {
+    cursor: pointer;
+    accent-color: green;
+  }
+  input[type=checkbox]:hover{ 
+    accent-color: blue;
+  }
+  .contentleft{
+    font-size: 15px; 
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif; 
+    padding: 10px; 
+    border-radius: 8px; 
+    color:white; 
+    background-color: black;
+    position: absolute; 
+    opacity: 0.7; 
+    margin-top: 15px; 
+    margin-left: 2px;
+    margin-bottom: 10px; 
+    min-width: 209px; 
+    max-width: 230px; 
+    min-height: 80vh; 
+    max-height: 80vh; 
+    overflow-y: auto; 
+    z-index: 9998;
+    overflow-x: hidden;
+  }
+
+
+  
+    .overlay {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0, 0, 0, 0.7);
+      transition: opacity 500ms;
+      visibility: hidden;
+      opacity: 0;
+    }
+    .overlay:target {
+      visibility: visible;
+      opacity: 0.8;
+    }
+  .box {
+    width: 100%;
+    margin: 0 auto;
+    background: rgb(255, 250, 250);
+    padding: 2px;
+    border: 2px solid #fff;
+    border-radius: 20px/50px;
+    background-clip: padding-box;
+    text-align: center;
+  }
+  .popup {
+    margin: 70px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 5px;
+    width: 30%;
+    position: relative;
+    transition: all 5s ease-in-out;
+  }
+
+  .popup h2 {
+    margin-top: 0;
+    color: #333;
+    font-family: Tahoma, Arial, sans-serif;
+  }
+  .popup .close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    transition: all 200ms;
+    font-size: 30px;
+    font-weight: bold;
+    text-decoration: none;
+    color: #333;
+  }
+  .popup .close:hover {
+    color: #06D85F;
+  }
+  .popup .content {
+    max-height: 30%;
+    overflow: auto;
+  }
+
+  @media screen and (max-width: 700px){
+    .box{
+      width: 70%;
+    }
+    .popup{
+      width: 70%;
+    }
+  }
+  /* a{
+    text-decoration: none;
+    color: black !important;
+  } */
+  .blue{
+    color: green;
+  }
+  .black{
+    color: black;
+  }
+  ul {
+    list-style: none;
+  }
+  
+
+  
+/* 
+form {
+position: absolute;
+z-index: 9999;
+outline: 0;
+-webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+-webkit-border-radius: 4px;
+border-radius: 4px;
+}
+
+form > .textbox {
+outline: 0;
+height: 42px;
+width: 244px;
+line-height: 42px;
+padding: 0 16px;
+background-color: rgba(255, 255, 255, 0.8);
+color: #212121;
+border: 0;
+float: left;
+-webkit-border-radius: 4px 0 0 4px;
+border-radius: 4px 0 0 4px;
+}
+
+form > .textbox:focus {
+outline: 0;
+background-color: #FFF;
+}
+
+form > .button {
+outline: 0;
+background: none;
+background-color: rgba(38, 50, 56, 0.8);
+float: left;
+height: 42px;
+width: 42px;
+text-align: center;
+line-height: 42px;
+border: 0;
+color: #FFF;
+font: normal normal normal 14px/1 FontAwesome;
+font-size: 16px;
+text-rendering: auto;
+text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+-webkit-transition: background-color .4s ease;
+transition: background-color .4s ease;
+-webkit-border-radius: 0 4px 4px 0;
+border-radius: 0 4px 4px 0;
+}
+
+form > .button:hover {
+background-color: rgba(0, 150, 136, 0.8);
+}
+input{
+cursor:pointer;
+} */
+.modal .main {
+  transition: transform .3s ease-out;
+  transform: translate(0,50px);
+}
+.main {
+position: fixed !important;
+bottom: 0 !important;
+left: 0% !important;
+right: 0% !important;
+margin-bottom: 0 !important;
+    
+} 
+
+.modal.show .main {
+  transform: none;
+}
+
+.mainchild {
+border-bottom-left-radius: 0;
+border-bottom-right-radius: 0;
+
+}
+
+.checkbox.style-f {
+  display: inline-block;
+  position: relative;
+  padding-left: 30px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+.checkbox.style-f input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+.checkbox.style-f input:checked ~ .checkbox__checkmark {
+  background-color: #eee;
+}
+.checkbox.style-f input:checked ~ .checkbox__checkmark:after {
+  transform: scale(1);
+}
+.checkbox.style-f input:checked ~ .checkbox__body {
+  font-weight: bold;
+}
+.checkbox.style-f:hover input ~ .checkbox__checkmark {
+  background-color: #eee;
+}
+.checkbox.style-f:hover input:checked ~ .checkbox__checkmark {
+  background-color: #eee;
+}
+.checkbox.style-f .checkbox__checkmark {
+  position: absolute;
+  top: 1px;
+  left: 0;
+  height: 22px;
+  width: 22px;
+  background-color: #eee;
+  transition: background-color 0.25s ease;
+  border-radius: 11px;
+}
+.checkbox.style-f .checkbox__checkmark:after {
+  content: "";
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 22px;
+  height: 22px;
+  display: block;
+  background-color: #f7cb15;
+  border-radius: 50%;
+  transform: scale(0);
+  transition: transform 0.25s ease;
+}
+.checkbox.style-f .checkbox__body {
+  color: #333;
+  line-height: 1.4;
+  font-size: 16px;
+  transition: font-weight 0.25s ease;
+} 
+
+</style>
+
+
+<style>
+.calendar-icon-container {
+  position: relative;
+  display: inline-block;
+}
+
+.calendar-icon {
+  font-size: 24px;
+  cursor: pointer;
+  color: #555;
+}
+
+.calendar-select {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+</style>
+
+</head>
+
+<body>
+  <div id="loading_halt_panel" style="z-index: 1065; position: fixed; top: 0%; left: 0%; width: 100%; height: 100%; visibility: hidden; background: black; opacity: .6">
+    <br> <br> <br> <br> <br> <br> <br>
+    <br> <br> <br> <br>
+    <center>
+      <b style="color: black; background-color: white;"> <!-- Page loading please wait ... -->
+      </b>
+    </center>
+
+    <div class="sk-cube-grid" id="loading_halt_panel"
+      style="position: absolute;">
+      <div class="sk-cube sk-cube1"></div>
+      <div class="sk-cube sk-cube2"></div>
+      <div class="sk-cube sk-cube3"></div>
+      <div class="sk-cube sk-cube4"></div>
+      <div class="sk-cube sk-cube5"></div>
+      <div class="sk-cube sk-cube6"></div>
+      <div class="sk-cube sk-cube7"></div>
+      <div class="sk-cube sk-cube8"></div>
+      <div class="sk-cube sk-cube9"></div>
+    </div>
+
+
+  </div>
+
+
+
+
+  <div id="map" class="map">    
+    <!-- <div id="divselect" className="ol-control"
+      style="position: absolute; z-index: 2; right:4.6%; top:20%; bottom: 0px; display: block; min-height: 100px; max-height: 500px; overflow-y: auto;">
+      <select name="division_sel" id="division_sel">
+        <option value="NA">Select Division</option>
+        <option title="125" value="AMPATI">AMPATI</option>
+        <option title="112" value="MAIRANG">MAIRANG</option>
+        <option title="115" value="NEC_KHLIEHRIAT">NEC_KHLIEHRIAT</option>
+      </select>
+      
+    </div> -->
+    <a id="image-download" download="map.png"></a>
+    <div style="position: absolute; right: 0; width: 100%; text-align: right; white-space:nowrap; z-index: 3; margin-right: 3%; margin-top: 45px;">
+      <div style="display: inline-block; display:inline-block;">
+        <!-- <select className="form-select" id="layer-select" style="width: 150px;">
+          <option value="OSM" selected>Open Street Map</option>
+          <option value="Aerial">Aerial</option>
+          <option value="AerialWithLabelsOnDemand" >Aerial with labels</option>
+          <option value="CanvasDark">Road dark</option> 
+        </select> -->
+        <select className="form-select" id="layer-select">
+          <option value="OSM">OpenStreetMap</option>
+          <!-- <option value="Aerial">Bing Aerial</option>
+          <option value="AerialWithLabelsOnDemand">Bing Aerial With Labels</option> -->
+          <!-- <option value="CanvasDark">Bing Dark</option> -->
+          <!-- <option value="World_Imagery">Satellite Map</option>
+          <option value="World_Topo_Map">Topographic</option> -->
+        </select>
+      </div>
+    
+      <div id="divselect" className="ol-control" style="display:inline-block;">
+        <select className="form-select" name="division_sel" id="division_sel" style="width: 150px;">
+          <option value="NA">Select Division</option>
+          <option title="125" value="AMPATI">AMPATI</option>
+          <option title="112" value="MAIRANG">MAIRANG</option>
+          <option title="115" value="NEC_KHLIEHRIAT">NEC_KHLIEHRIAT</option>
+        </select> 
+      </div>
+    </div>
+
+
+    <!-- Font Awesome Icon Button -->
+    <button type="button" 
+            class="btn btn-primary rounded-circle shadow" 
+            data-bs-toggle="modal" 
+            data-bs-target="#addLayerModal"
+            style="position: absolute; top: 150px; right: 20px; z-index: 1000; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center;">
+      <i class="fa fa-plus"></i>
+    </button>
+
+    <!-- Bootstrap Modal -->
+    <div class="modal fade" id="addLayerModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Add Custom Layer</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="text" id="addLayerName" class="form-control mb-2" placeholder="Enter layer name">
+            <input type="text" id="addLayerInput" class="form-control mb-2" placeholder="Enter tile URL template (with {z}/{x}/{y})">
+            
+            <!-- Disclaimer -->
+            <div class="disclaimer small mt-2">
+              <i class="fa fa-exclamation-triangle text-warning" aria-hidden="true"></i>
+              Ensure you have legal rights to use the entered source.
+            </div>
+
+            <!-- Added layers list -->
+            <div id="addedLayersList" class="list-group mt-3"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-primary" id="confirmAddLayerBtn">Add Layer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <div style="position: absolute; right: 0; width: 100%; text-align: right; white-space:nowrap; z-index: 3; margin-right: 3%; margin-top: 80px;">
+      <!-- <select id="calamitySelect" class="calendar-select">
+        <option value="NA" selected>Select Calamity</option>
+        <option value="today">Today</option>
+        <option value="yesterday">Yesterday</option>
+        <option value="7days">Last 7 Days</option>
+        <option value="thisweek">This Week</option>
+        <option value="lastweek">Last Week</option>
+        <option value="thismonth">This Month</option>
+        <option value="lastmonth">Last Month</option>
+        <option value="past30days">Past 30 days</option>
+        <option value="thisyear">This Year</option>
+        <option value="lastyear">Last Year</option>
+      </select> -->
+      <div class="calendar-icon-container">
+        <i class="fa fa-calendar calendar-icon"></i>
+        <select id="calamitySelect" class="calendar-select">
+          <option value="NA" selected>Select Calamity</option>
+          <option value="today">Today</option>
+          <option value="yesterday">Yesterday</option>
+          <option value="7days">Last 7 Days</option>
+          <option value="thisweek">This Week</option>
+          <option value="lastweek">Last Week</option>
+          <option value="thismonth">This Month</option>
+          <option value="lastmonth">Last Month</option>
+          <option value="past30days">Past 30 days</option>
+          <option value="thisyear">This Year</option>
+          <option value="lastyear">Last Year</option>
+        </select>
+      </div>
+    </div>
+
+    
+				
+
+    <!-- <div id="legenddiv" className="ol-control"
+      style="position: absolute; z-index: 2; right:10px; bottom: 0px; display: block; min-height: 100px; max-height: 200px; overflow-y: auto;">
+      <button id="capture">capture</button>
+    </div> -->
+    <div id="legenddiv1" className="ol-control" style="color: white; position: absolute; z-index: 2; right: 10px; bottom: 110px; display: block; display: grid; align-items: center;">
+      <div style="position: relative;">
+        <i class="fa fa-list plusminus black" aria-hidden="true" title="legend view" style="background-color: #c2d6d6; font-size: 25px !important; cursor: pointer; float: right;"></i>
+      </div>
+
+      <!-- <div style="position: relative;">
+        <i id='coordappend' class="fa fa-list black" aria-hidden="true" title="legend view" style="background-color: #c2d6d6; font-size: 25px !important; cursor: pointer; float: right;"></i>
+      </div> -->
+      <div id="legenddiv" className="ol-control" style="position: relative; z-index: 2; right: 10px; display: none; min-height: 0px; max-height: 400px; overflow-y: auto;">
+      
+      </div>
+    </div>
+
+
+    <div id="controlsdiv" class="ol-control" style="position: absolute; z-index: 2; right: 10px; bottom: 150px; display: grid; gap: 8px; align-items: center;">
+      <div id="controls">
+        <button id="uploadBtn" title="Upload Layer">
+          <i class="fa fa-solid fa fa-upload"></i>
+        </button>
+        <button id="removeBtn" title="Remove Layer">
+          <i class="fa fa-solid fa fa-trash"></i>
+        </button>
+        <input type="file" id="fileInput" accept=".kml,.kmz,.geojson,.json,.gpx,.zip" style="display:none;" />
+      </div>
+    </div>
+
+    <!-- <div id="featureInfo" style="position: absolute; top: 20px; right: 20px; background: white; padding: 10px; border-radius: 6px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3); max-height: 200px; overflow-y: auto; min-width: 200px; display: BLOCK; z-index: 5;">
+    </div> -->
+
+    <div style="position: absolute; z-index: 2; left:10px; top:90px; color: white;">
+      <!-- <label for="track">
+          Track
+          <input id="track" type="checkbox" />
+      </label> -->
+      <div class="checkboxes__row">
+        <div class="checkboxes__item">
+          <label class="checkbox style-f">
+            <input type="checkbox" id="track"/>
+            <div class="checkbox__checkmark"></div>
+            <div class="checkbox__body">Style F</div>
+          </label>
+        </div>
+      </div>
+
+    </div>
+
+
+
+
+    <div id="content-left" class="contentleft" >
+      <fieldset>
+      <legend>Road</legend>
+      <div id="roadsdiv">
+        <table cellspacing=2>
+          <tr>
+            <td style="width: 162px;"><label for="sh">State Highway</label></td>
+            <td> <input id="sh" type="checkbox" value="sh" autocomplete="off" /></td>
+          </tr>
+  
+          <tr>
+            <td><label for="mdr">Major District Road</label></td>
+            <td> <input id="mdr" type="checkbox" value="mdr" autocomplete="off" /></td>
+          </tr>
+          <tr>
+            <td><label for="ur">Urban Road</label></td>
+            <td> <input id="ur" type="checkbox" value="ur" autocomplete="off" /></td>
+          </tr>
+          <tr>
+            <td><label for="odr">Other District Road</label></td>
+            <td> <input id="odr" type="checkbox" value="odr" autocomplete="off" /></td>
+          </tr>
+          <tr>
+            <td><label for="lr">Local Road</label></td>
+            <td> <input id="lr" type="checkbox" value="lr" autocomplete="off" /></td>
+          </tr>
+          <tr>
+            <td><label for="nh">National Highway</label></td>
+            <td> <input id="nh" type="checkbox" value="nationalhighway" autocomplete="off"/></td>
+          </tr>
+
+        </table>
+      </div>
+      </fieldset>
+      <fieldset>
+      <legend>Asset</legend>
+      <div id="assetleftdiv">
+        <table cellspacing=2>
+          <tr>
+            <td><label for="ri">Road Inventory</label></td>
+            <td> <input id="ri" type="checkbox" value="ri" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="projectw">Project Work</label></td>
+            <td> <input id="projectw" type="checkbox" value="projectw" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="roug">Road Roughness</label></td>
+            <td> <input id="roug" type="checkbox" value="roug" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="bridge">Bridge</label></td>
+            <td> <input id="bridge" type="checkbox" value="bridge" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="bridgerating">Bridge Rating</label></td>
+            <td> <input id="bridgerating" type="checkbox" value="bridgerating" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="bxslab">Box/Slab Culvert</label></td>
+            <td><input id="bxslab" type="checkbox" value="bxslab" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="culvert">Culvert</label></td>
+            <td> <input id="culvert" type="checkbox" value="culvert" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="row">Right of Way</label></td>
+            <td> <input id="row" type="checkbox" value="row" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="roadaccident">Road Accident</label></td>
+            <td> <input id="roadaccident" type="checkbox" value="roadaccident" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="trfcdistr">Traffic Distribution</label></td>
+            <td> <input id="trfcdistr" type="checkbox" value="trfcdistr" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="workhistory">Work History</label></td>
+            <td> <input id="workhistory" type="checkbox" value="workhistory" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="trfcstn">Traffic Station</label></td>
+            <td> <input id="trfcstn" type="checkbox" value="trfcstn" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="traceroad">Trace Road</label></td>
+            <td> <input id="traceroad" type="checkbox" value="traceroad" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="drawpoint">Draw Growth Point</label></td>
+            <td> <input id="drawpoint" type="checkbox" value="drawpoint" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="viewslope">Slope</label></td>
+            <td> <input id="viewslope" type="checkbox" value="viewslope" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="viewgrowthpoint">View Growth Point</label></td>
+            <td> <input id="viewgrowthpoint" type="checkbox" value="viewslope" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="viewroadimportance">View Road Importance</label></td>
+            <td> <input id="viewroadimportance" type="checkbox" value="viewroadimportance" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="disaster">Natural Calamities</label></td>
+            <td> <input id="disaster" type="checkbox" value="disaster" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="ncisapproval">Calamities Approval Status</label></td>
+            <td> <input id="ncisapproval" type="checkbox" value="ncisapproval" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="amenities">Amenities</label></td>
+            <td> <input id="amenities" type="checkbox" value="amenities" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="accidentheat">Accident</label></td>
+            <td> <input id="accidentheat" type="checkbox" value="accidentheat" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="gridaccident">Grid Density</label></td>
+            <td> <input id="gridaccident" type="checkbox" value="gridaccident" autocomplete="off"/></td>
+          </tr>
+          <tr>
+            <td><label for="blackspotaccident">Black Spot</label></td>
+            <td> <input id="blackspotaccident" type="checkbox" value="blackspotaccident" autocomplete="off"/></td>
+          </tr>
+          <!-- <tr>
+            <td><label for="project_status">Project Status</label></td>
+            <td> <input id="project_status" type="checkbox" value="project_status" autocomplete="off"/></td>
+          </tr> -->
+          <tr>
+            <td><label for="viewroadimportance">Analyze Road Importance</label></td>
+            <td> <input id="viewroadimportance" type="checkbox" value="viewroadimportance" /></td>
+          </tr>
+          <tr>
+            <td colspan="2"> 
+              <input id="viewroadimportanceradius" type="text" value="2" />
+              <button style="display: none;" id="getfacilityforroadimportance">Facility</button>
+            </td>
+          </tr>
+        </table>
+      </div>
+      </fieldset>
+      <div style="border-bottom: 0.5px solid white;">
+        <table style="width: 100%;">
+          <tr>
+            <td>
+              <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" style="width: 100%;">
+                Advance Search
+              </button>
+            </td> 
+          </tr>
+        </table>
+      </div>
+      <div style="border-bottom: 0.5px solid white;">
+        <label>Locate</label>
+        <table>
+          <tr>
+            <td>
+              <input type="text" id="lontext"  style="width: 90px;" placeholder="Logitude"/>
+            </td>
+            <td>
+              <input type="text" id="lattext"  style="width: 90px;" placeholder="Latitude"/>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <!-- <button className="btn btn-secondary" style="width: 100%; color: black; cursor: pointer;" id="latlonlocatebutton">Locate</button> -->
+              <button type="button" id="latlonlocatebutton" class="btn btn-success" style="width: 100%;">
+                Locate
+              </button>
+            </td>
+            <td>
+              <!-- <button className="btn btn-secondary" style="width: 100%; color: black; cursor: pointer;" id="latlonlocateclearbutton">Clear</button>     -->
+              <button type="button" id="latlonlocateclearbutton" class="btn btn-warning" style="width: 100%;">
+                Clear
+              </button>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div style="border-bottom: 0.5px solid white;">
+        <table id="measurment_tool" bgcolor="#0000" style="width: 100%;">
+          <tr style="cursor: pointer;">
+            <td align="left"><label for="type">Measurement</label></td>
+          </tr>
+          <tr>
+            <td>
+              <select id="type" style="width: 100%;">
+                <option value="length">Length (LineString)</option>
+                <option value="area">Area (Polygon)</option>
+              </select>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div style="border-bottom: 0.5px solid white;">
+        <label>Search by Road Code</label>
+        <table>
+          <tr>
+            <td colspan="2"><input style="width: 100%;" id="road_search_box_new" type="textbox" placeholder="Road Code" /></td>
+          </tr>
+          <tr>
+            <td>
+              <!-- <input className="btn btn-secondary" style="width: 95px; cursor: pointer;" id="road_search_btn" type="button" value="Search" /> -->
+              <button type="button" id="road_search_btn" class="btn btn-success" style="width: 100%;">
+                Search
+              </button>
+            </td>
+            <td>
+              <!-- <input className="btn btn-secondary" style="width: 95px; cursor: pointer;" id="road_search_clear_btn" type="button" value="Clear" /> -->
+              <button type="button" id="road_search_clear_btn" class="btn btn-warning" style="width: 100%;">
+                Clear
+              </button>
+            </td>
+          </tr>
+        </table>
+      </div>
+      <div>
+        <table style="width: 100%;">
+          <tr>
+            <td>
+              <!-- <button id="capture" type="button" className="btn btn-secondary" style="width: 100%; cursor: pointer;">Print Map</button> -->
+              <button type="button" id="capture" class="btn btn-primary" style="width: 100%;">
+                Print Map
+              </button>
+            </td> 
+          </tr>
+        </table>
+      </div>
+      <div style="border-bottom: 0.5px solid white;">
+        <table style="width: 100%;">
+          <tr>
+            <td>
+             
+              <table Cellspacing=3 id="aditional">
+                <tr>
+                  <td>ITNDP Connected Village</td>
+                  <td><input type="checkbox" value="http://103.219.61.6/geoserver/megrams/wms^ITNDP Connected village$GEOSERVER$megrams:itndp_connected_village" /></td>
+                </tr>
+                <tr>
+                  <td>MPRDC_1</td>
+                  <td> <input  type="checkbox" value="https://mprams.in:6443/arcgis/rest/services/mprams/zoom/MapServer^MPRDC_1$ARCGIS$NA" /></td>          
+                </tr>
+                <tr>
+                  <td>DISTRICT</td>
+                  
+                  <td> <input  type="checkbox" value="https://mprams.in:6443/arcgis/rest/services/mprams_additional_layer/District/MapServer^DISTRICT$ARCGIS$NA" />
+                    <input type="range" min="0" max="100" value="100"  />
+                  </td>          
+                </tr>
+                <tr>
+                  <td>GEOLayer</td>
+                  <td><input  type="checkbox" value="http://103.95.48.141:8080/geoserver/megrams/wms^GEOlayer$GEOSERVER$megrams:meghalaya_district" />
+                    <input type="range" min="0" max="100" value="100"  />
+                  </td>
+                </tr>
+              </table>
+
+            </td> 
+          </tr>
+        </table>
+      </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <div id="accordionExample" class="list" style="display:none;position:absolute;top:0px;">
+      <table Cellspacing=3 >
+       
+        <input type="text" id="jrdcnidfordb"/>    
+        <input type="text" id="roadidfordb"/>
+
+       <tr><td colspan="=2">
+        <table Cellspacing=3 id="aditional">
+        <tr>
+          <td>MPRDC_1</td>
+          <td> <input  type="checkbox" value="https://mprams.in:6443/arcgis/rest/services/mprams/zoom/MapServer^MPRDC_1$ARCGIS$NA" /></td>          
+        </tr>
+        <tr>
+          <td>DISTRICT</td>
+          
+          <td> <input  type="checkbox" value="https://mprams.in:6443/arcgis/rest/services/mprams_additional_layer/District/MapServer^DISTRICT$ARCGIS$NA" />
+            <input type="range" min="0" max="100" value="100"  />
+          </td>          
+        </tr>
+        <tr>
+          <td>GEOLayer</td>
+          <td><input  type="checkbox" value="http://103.95.48.141:8080/geoserver/megrams/wms^GEOlayer$GEOSERVER$megrams:meghalaya_district" />
+            <input type="range" min="0" max="100" value="100"  />
+          </td>
+        </tr>
+       </table>
+
+       </td>
+      
+      </tr>
+        
+
+        <!-- <tr><td><input type="text" id="lattext" value="27.17500159774926"/></td><td><input type="text" id="lontext" value="78.04215292569894"/></td></tr>
+        <tr><td colspan="2"><input type="button" id="latlonlocatebutton" value="Locate"/><input type="button" id="latlonlocateclearbutton" value="Clear"/></td></tr> -->
+        <tr><td colspan="2"><select style="width: 100%;" id="advance_query_layer"></select></td></tr>
+        <tr><td colspan="2"><select style="width: 100%;" id="advance_query_attrib"  size="5"></select></td>
+         </tr>
+         <tr><td colspan="2"><input type="button" id="getvalue"/></td></tr>
+         <tr>
+           <td colspan="2" id="advance_query_formula_btn">
+
+                          <input  type="button" value="="/>
+                          <input  type="button" value="!="/>
+                          <input  type="button" value=">"/>
+                          <input  type="button" value="<"/>
+                          <input  type="button" value=">="/>
+                          <input  type="button" value="<="/>
+                          <input  type="button" value=">="/>
+                          <input  type="button" value="Like"/>
+                          <input  type="button" value="'"/>
+                          <input  type="button" value="And"/>
+                          <input  type="button" value="Or"/>
+							       			
+
+           </td>
+         </tr>
+        <tr><td><textarea id="advance_query_box"></textarea></td>
+          <td>
+            <input type="button" value="go" id="advance_query_run"/>
+            <input type="button" value="clear" id="advance_query_clear"/>
+          </td>
+        </tr>
+        <tr><td colspan="2">
+
+          <select id="advance_query_result" class="form-select" multiple="multiple" style="width:100%; min-height:100px;max-height:100px;">
+            
+          </select>
+
+
+        </td></tr>
+        <tr>
+          <td colspan="2"><b style='color:orange;'>Road</b></td>
+        </tr>
+        <tr>
+          <td colspan="2"></td>
+        </tr>
+        <!-- <tr>
+          <td><label for="sh">State Highway</label></td>
+          <td> <input id="sh" type="checkbox" value="test" /></td>
+        </tr>
+
+        <tr>
+          <td><label for="mdr">Major District Road</label></td>
+          <td> <input id="mdr" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="ur">Urban Road</label></td>
+          <td> <input id="ur" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="odr">Other District Road</label></td>
+          <td> <input id="odr" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="lr">Local Road</label></td>
+          <td> <input id="lr" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="nh">NH</label></td>
+          <td> <input id="nh" type="checkbox" value="test" /></td>
+        </tr> -->
+
+        <!-- <tr>
+          <td><label for="traceroad">Trace Road</label></td>
+          <td> <input id="traceroad" type="checkbox" value="trace" /></td>
+        </tr>
+        <tr>
+          <td><label for="drawpoint">Draw Growth Point</label></td>
+          <td> <input id="drawpoint" type="checkbox" value="drawpoint" /></td>
+        </tr>
+        <tr>
+          <td><label for="viewgrowthpoint">View Growth Point</label></td>
+          <td> <input id="viewgrowthpoint" type="checkbox" value="viewgrowthpoint" /></td>
+        </tr>
+        <tr>
+          <td><label for="viewslope">View Slope</label></td>
+          <td> <input id="viewslope" type="checkbox" value="viewslope" /></td>
+        </tr>
+        <tr>
+          <td><label for="viewroadimportance">View Road Importance</label></td>
+          <td> <input id="viewroadimportance" type="checkbox" value="viewroadimportance" /></td>
+        </tr> -->
+        <!-- <tr><td colspan="2">
+
+          <button style="display: none;"
+										id="getfacilityforroadimportance">Facility</button></td>
+
+        </td></tr>
+        <tr>
+          <td><label for="viewroadimportanceradius">View Road Importance (km)</label></td>
+          <td> <input id="viewroadimportanceradius" type="text" value="2" /></td>
+        </tr> -->
+        <tr>
+           <td colspan="2">
+            <table width="60%">
+          <tr style="background-color: white;color: black;">
+              <td class="ecis_road_code">0</td>
+              <td class="ecis_calculated_chainage" data="st">0</td>
+              <td class="ecis_calculated_chainage" data="ed">0</td>
+          </tr>
+         <tr><td><input type="button" id="ecis_add_road_segment" value="Add Segment"/></td></tr>
+          </table>
+           </td>
+        </tr>
+        <tr>
+          <td><label for="getrevchainage">Chianage</label></td>
+          <td> <input id="getrevchainage" type="checkbox" value="getrevchainage" /></td>
+        </tr>
+
+        <tr> <td><input type="text" id="radius" value="2" /></td></tr>
+        <tr>
+          <td>
+            <input type="text" id="growth_lon"  />
+            <input type="text" id="growth_lat"  />
+          
+          </td>
+
+        </tr>
+        <tr>
+          <td>
+            
+           <input type="button" id="getfacility" />
+          
+          </td>
+
+        </tr>
+        <tr>
+          <td colspan="2"><b style='color:orange;'>Assets</b></td>
+        </tr>
+        <tr>
+          <td colspan="2"></td>
+        </tr>
+        <!-- <tr>
+          <td><label for="ri">Road Inventory</label></td>
+          <td> <input id="ri" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="roug">Road Roughness</label></td>
+          <td> <input id="roug" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="bridge">Bridge</label></td>
+          <td> <input id="bridge" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="bridgerating">Bridge Rating</label></td>
+          <td> <input id="bridgerating" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="bxslab">Box/Slab Culvert</label></td>
+          <td><input id="bxslab" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="culvert">Culvert</label></td>
+          <td> <input id="culvert" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="row">Right of Way</label></td>
+          <td> <input id="row" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="trfcdistr">Traffic Distribution</label></td>
+          <td> <input id="trfcdistr" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+          <td><label for="workhistory">Work History</label></td>
+          <td> <input id="workhistory" type="checkbox" value="test" /></td>
+        </tr>
+        <tr>
+        <tr>
+          <td><label for="trfcstn">Traffic Station</label></td>
+          <td> <input id="trfcstn" type="checkbox" value="test" /></td>
+        </tr> -->
+        <!-- <tr>
+          <td colspan="2"><b style='color:orange;'>Tools</b><br></td>
+        </tr>
+        <tr>
+          <td colspan="2"><label for="road_search_box">Search by Road Code</label></td>
+        </tr>
+        <tr>
+          <td colspan="2"><input style="width: 95%;" id="road_search_box_new" type="textbox" value="2084" /></td>
+        </tr>
+        <tr>
+          <td align="center" colspan="2"><input id="road_search_btn" type="button" value="Search" /></td>
+        </tr>
+        <tr>
+          <td align="center" colspan="2"><input id="road_search_clear_btn" type="button" value="Clear" /></td>
+        </tr>-->
+
+        <tr>
+          <td align="center" colspan="2"><input id="filter_search" type="button" value="Search" /></td>
+        </tr>
+        <tr>
+          <td align="center" colspan="2"><input id="filter_clear" type="button" value="Clear" /></td>
+        </tr>
+
+        <!-- <tr>
+          <td colspan="2" style="width: 95%;">
+            <table id="measurment_tool" bgcolor="#0000" style="width: 100%;">
+              <tr>
+                <td align="center"><label for="type">Measurment Tool </label></td>
+              </tr>
+              <tr>
+                <td>
+                  <select id="type">
+                    <option value="length">Length (LineString)</option>
+                    <option value="area">Area (Polygon)</option>
+                  </select>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr >
+        <td>
+         <label for="format">Measurment Tool </label>
+        </td>
+        <td>
+          <select id="type" style="width: 100%;">
+            <option value="length">Length (LineString)</option>
+            <option value="area">Area (Polygon)</option>
+          </select>
+        </td>
+      </tr>
+
+        <tr>
+          <td>
+            <label for="format">Page size </label>
+          </td>
+          <td>
+            <select id="format" style="width: 100%;">
+              <option value="a0">A0 (slow)</option>
+              <option value="a1">A1</option>
+              <option value="a2">A2</option>
+              <option value="a3">A3</option>
+              <option value="a4" selected>A4</option>
+              <option value="a5">A5 (fast)</option>
+            </select>
+          </td>
+        </tr>
+
+        <tr>
+          <td>
+            <label for="resolution">Resolution </label>
+          </td>
+          <td>
+            <select id="resolution" style="width: 100%;">
+              <option value="72">72 dpi (fast)</option>
+              <option value="150">150 dpi</option>
+              <option value="200" selected>200 dpi</option>
+              <option value="300">300 dpi (slow)</option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>
+            <label for="scale">Scale </label>
+          </td>
+          <td>
+            <select id="scale" style="width: 100%;">
+              <option value="500">1:500000</option>
+              <option value="250" selected>1:250000</option>
+              <option value="100">1:100000</option>
+              <option value="50">1:50000</option>
+              <option value="25">1:25000</option>
+              <option value="10">1:10000</option>
+            </select>
+          </td>
+        </tr> -->
+        <tr>
+          <td align="center" colspan="2"><button id="export-pdf">Export PDF</button></td>
+        </tr>
+
+      </table>
+
+
+    </div>
+
+    <div id="popup" class="ol-popup">
+      <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+      <table border="1" width="100%">
+        <tr><td><div id="popup-content"></div></td></tr>
+        <tr><td><video id="video_src"/></td></tr>
+        <tr><td align="center"><image id="asset_image" src="images/RI_3006_p_128.jpg" style="width:100%;" /></td></tr>
+        <tr><td><table><tr><td id="asset_image_list">
+
+          <div style="overflow:scroll;overflow-y: hidden;width:250px;"><table><tbody><tr classname="doclist_url"><td><b data="24" title="BRDG_6_test_edch_116.jpg" style="cursor:pointer;">&nbsp;1&nbsp;</b></td><td><b data="19" title="RI_78_bov3mwty_101.png" style="cursor:pointer;">&nbsp;2&nbsp;</b></td><td><b data="0,0,1206" title="RI_48_testroad_80.mp4" style="cursor:pointer;">&nbsp;3&nbsp;</b></td><td><b data="0,0,1206" title="BRDG_6_testroad_98.mp4" style="cursor:pointer;">&nbsp;4&nbsp;</b></td><td><b data="0,0,1206" title="CUL_4_bus_7.jpg" style="cursor:pointer;">&nbsp;5&nbsp;</b></td><td><b data="1,1,1206" title="BRDG_4_lasa_4.png" style="cursor:pointer;">&nbsp;6&nbsp;</b></td></tr></tbody></table><div>
+
+
+        </td></tr></table></td></tr>
+    </table>
+    <table width="100%" style="font-weight: bold;" id="doctable">
+					
+    </table>
+    </div>
+
+
+    
+
+    <!-- <select id="layer-select" style="position: absolute;top:10%;right: 5%;z-index: 9999;">
+      <option value="OSM" selected>Open Street Map</option>
+      <option value="Aerial">Aerial</option>
+      <option value="AerialWithLabelsOnDemand" >Aerial with labels</option>
+      <option value="CanvasDark">Road dark</option>
+     
+    </select> -->
+
+  </div>
+
+  <div id="large_image_container" style="visibility:hidden;position:fixed;top:2%;right:10%;width: 80%;height:97%;z-index:9999;background-color:white;overflow: scroll;">
+   <b style="color: black;cursor: pointer;position:fixed;right:13%;" id="large_image_container_close">X</b>
+    <table align="center" style="width:70%;height:70%;" >
+      <tr>
+        <td id="large_image" align="center">
+
+        </td>
+      </tr>
+    </table>
+    
+  </div>
+
+  <div id="chainage_panel" style="position:fixed;width:2%;height:2%;left:48%;top:48%;z-index:999;color:magenta;font-weight: bold; display: none;">
+    <table>
+     <tr align="right"><td><font style="cursor: pointer;" onclick="{document.getElementById('chainage_panel').style.visibility='hidden';}">X</font></td></tr>
+     <tr align="left"><td><div id="cal_chain">Calculating......</div></td></tr>
+    </table>
+ 
+    </div>
+
+
+    <div id="mypdf" style="display: none;">
+      <div style="width: 100%; text-align:center; margin-bottom: 5px; font-size: 22px;">
+          <b>Meghalaya Road Asset Management System (MEG-RAMS)</b>
+      </div>
+      <div>
+      <div id="parent" style="display: flex;">
+        <div id="mycanvas" style="flex:1; width: 100% !important;">
+
+        </div>
+        <div id="nextdiv" style="position: absolute; right: 30px;">
+            <img height="120" width="160" src="./images/Compass_transparent.png"/>
+        </div>
+      </div>
+      </div>
+
+      <div class="row" id="legendshow" style="margin: auto">
+        <div>
+          <h3>Legend Information: </h3>
+        </div>
+        <div id="roadimage" style="display: flex; flex-wrap: nowrap;">
+          <div id="sh_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">State Highway <br></span>
+            <img height="20" width="150" src="./images/state_highway.png" />
+          </div>
+          <div id="mdr_image" class="block" style="display: none; float: left; text-align: left; margin:7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Major District Road <br></span>
+            <img height="20" width="150" src="./images/mdr.png" />
+          </div>
+          <div id="odr_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Other District Road <br></span>
+            <img height="20" width="150" src="./images/odr.png" />
+          </div>
+          <div id="lr_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Rural Road <br></span>
+            <img height="20" width="150" src="./images/lr.png" />
+          </div>
+          <div id="nh_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">National Highway <br></span>
+            <img height="20" width="150" src="./images/nh.png" />
+          </div>
+          <div id="ur_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Urban Road <br></span>
+            <img height="20" width="150" src="./images/ur_image.png" />
+          </div>
+          <div id="bridge_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Bridge <br></span>
+            <img height="140" width="150" src="./images/bridge.png" />
+          </div>
+          <div id="ri_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Road Inventory <br></span>
+            <img height="140" width="150" src="./images/ri.png" />
+          </div>
+          <div id="roug_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Road Roughness <br></span>
+            <img height="140" width="150" src="./images/roug.png" />
+          </div>
+          <div id="row_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px; width: 100%;">Row of Way <br></span>
+            <img height="180" width="200" src="./images/row_1.png" />
+            <img height="180" width="200" src="./images/row_2.png" />
+            <img height="180" width="200" src="./images/row_3.png" />
+          </div>
+          <div id="brdgrating_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Bridge Rating <br></span>
+            <img height="120" width="130" src="./images/brdgrating.png" />
+          </div>
+          <div id="boxslab_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Box/Slab Culvert <br></span>
+            <img height="20" width="20" src="./images/boxslab.png" />
+          </div>
+          <div id="culvert_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Hume Pipe Culvert <br></span>
+            <img height="15" width="15" src="./images/culvert.png" />
+          </div>
+          <div id="trfcdistr_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Traffic Distribution <br></span>
+            <img height="100" width="120" src="./images/trfcdistr.png" />
+          </div>
+          <div id="workhistory_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Work History <br></span>
+            <img height="80" width="60" src="./images/workhist.png" />
+          </div>
+          <div id="traffic_station_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Traffic Station <br></span>
+            <img height="20" width="20" src="./images/trfcstn.png" />
+          </div>
+          <div id="slope_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Slope <br></span>
+            <img height="100" width="100" src="./images/slope.png" />
+          </div>
+          <div id="soil_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Soil <br></span>
+            <img height="60" width="100" src="./images/soil.png" />
+          </div>
+          <div id="rainfall_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Rainfall <br></span>
+            <img height="60" width="100" src="./images/rainfall.png" />
+          </div>
+          <div id="drain_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Drainage <br></span>
+            <img height="20" width="100" src="./images/drain.png" />
+          </div>
+          <div id="landuse_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Land Use <br></span>
+            <img height="60" width="100" src="./images/landuse.png" />
+          </div>
+          <div id="vulnr_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Vulnerability Assessment <br></span>
+            <img height="140" width="150" src="./images/vulnr.png" />
+          </div>
+          <div id="growthpoint_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Growth Point <br></span>
+            <img height="15" width="15" src="./images/growthpoint_image.png" />
+          </div>
+          <div id="calamity_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Natural Calamity<br></span>
+            <img height="15" width="15" src="./images/disaster.png" />
+          </div>
+          <div id="calamity_status_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Approval Status <br></span>
+            <img height="15" width="15" src="./images/calamity_approval.png" />
+          </div>
+          <div id="workstatus_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Approval Status <br></span>
+            <img height="15" width="15" src="./images/project_status.png" />
+          </div>
+          <div id="facilities_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">Amenities <br></span>
+            <img height="15" width="15" src="./images/amenities.png" />
+          </div>
+          <div id="accident_heatmap_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <!-- <span style="background-color: #c2d6d6; margin-bottom: 2px;">Amenities <br></span>
+            <img height="15" width="15" src="./images/amenities.png" /> -->
+          </div>
+          <div id="black_spot_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <!-- <span style="background-color: #c2d6d6; margin-bottom: 2px;">Amenities <br></span>
+            <img height="15" width="15" src="./images/amenities.png" /> -->
+          </div>
+          <div id="grid_accident_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <!-- <span style="background-color: #c2d6d6; margin-bottom: 2px;">Amenities <br></span>
+            <img height="15" width="15" src="./images/amenities.png" /> -->
+          </div>
+           <div id="projectw_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <!-- <span style="background-color: #c2d6d6; margin-bottom: 2px;">Amenities <br></span>
+            <img height="15" width="15" src="./images/amenities.png" /> -->
+          </div>
+
+          <div id="roadaccident_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <!-- <span style="background-color: #c2d6d6; margin-bottom: 2px;">Amenities <br></span>
+            <img height="15" width="15" src="./images/amenities.png" /> -->
+          </div>
+
+
+        </div>
+
+      </div>
+
+
+    </div>
+
+  
+</body>
+
+</html>

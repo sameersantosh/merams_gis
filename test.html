@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OpenLayers Map with Scale Bar Capture</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/ol/ol.css">
+    <style>
+      #map {
+        width: 600px;
+        height: 400px;
+      }
+      #capture {
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    <button id="capture">Capture Map</button>
+    <div id="imageContainer"></div>
+    <script src="https://cdn.jsdelivr.net/npm/ol/ol.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas/dist/html2canvas.min.js"></script>
+
+    <script type="text/javascript">
+      // Create the map
+      const map = new ol.Map({
+        target: 'map',
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.OSM(),
+          }),
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([0, 0]),
+          zoom: 2,
+        }),
+        controls: ol.control.defaults().extend([
+          new ol.control.ScaleLine(), // Add the ScaleLine control
+        ]),
+      });
+
+      // Capture the map including the scale bar
+      document.getElementById('capture').addEventListener('click', function () {
+        html2canvas(document.getElementById('map')).then(function (canvas) {
+          // Display the captured image
+          const imageContainer = document.getElementById('imageContainer');
+          imageContainer.innerHTML = '';
+          imageContainer.appendChild(canvas);
+
+          // Optionally, you can download the image
+          const link = document.createElement('a');
+          link.download = 'map_with_scalebar.png';
+          link.href = canvas.toDataURL();
+          link.click();
+        });
+      });
+    </script>
+  </body>
+</html>
