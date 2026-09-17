@@ -4053,7 +4053,7 @@ function climateRainfallView(){
       }
 
       vectorSource_climate_rainfall.setUrl(domain_name+"ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Aclimate_average_rainfall&maxFeatures=50000&outputFormat=application%2Fjson");
-      //attachLoadingEvents(vectorSource_climate_rainfall);
+      attachLoadingEvents(vectorSource_climate_rainfall);
 
       climate_rainfall_layer_theme_source= new ImageWMS({
         url: domain_name+'wms',
@@ -4062,6 +4062,7 @@ function climateRainfallView(){
         crossOrigin: 'anonymous',
         serverType: 'geoserver',
       });
+      attachLoadingEvents(climate_rainfall_layer_theme_source);
       climate_rianfall_layer_theme.setSource(climate_rainfall_layer_theme_source);
 
       climate_rainfall_layer.setVisible(true);
@@ -4108,7 +4109,7 @@ function climateVulnerabilityView(){
       }
 
       vectorSource_vlunerability_observation.setUrl(domain_name+"ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Aclimate_vulnerability_obseravtion&maxFeatures=50000&outputFormat=application%2Fjson");
-      //attachLoadingEvents(vectorSource_vlunerability_observationy);
+      attachLoadingEvents(vectorSource_vlunerability_observation);
 
       climate_vulnerability_layer_theme_source= new ImageWMS({
         url: domain_name+'wms',
@@ -4117,7 +4118,7 @@ function climateVulnerabilityView(){
         crossOrigin: 'anonymous',
         serverType: 'geoserver',
       });
-      //attachLoadingEvents(sh_layer_theme_source);
+      attachLoadingEvents(climate_vulnerability_layer_theme_source);
 
       climate_vulnerability_layer_theme.setSource(climate_vulnerability_layer_theme_source);
 
