@@ -286,6 +286,23 @@ let sh_layer_theme_source= new ImageWMS({
   serverType: 'geoserver',
 });
 
+let climate_rainfall_layer_theme_source= new ImageWMS({
+  url: domain_name+'wms',
+  params: { "LAYERS": 'megrams:climate_average_rainfall'},
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
+
+
+let climate_vulnerability_layer_theme_source= new ImageWMS({
+  url: domain_name+'wms',
+  params: { "LAYERS": 'megrams:climate_vulnerability_obseravtion'},
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
+
 
 let projectw_layer_theme_source= new ImageWMS({
   url: domain_name+'wms',
@@ -1310,6 +1327,21 @@ const vectorSource_sh = new VectorSource({
 });
 
 
+//Climate Average Rainfall
+const vectorSource_climate_rainfall = new VectorSource({
+  url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Aclimate_average_rainfall&maxFeatures=50000&outputFormat=application%2Fjson',
+  format: new GeoJSON(),
+  crossOrigin: 'anonymous',
+});
+
+
+//Climate Vulnerability Observation
+const vectorSource_vlunerability_observation = new VectorSource({
+  url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Aclimate_vulnerability_obseravtion&maxFeatures=50000&outputFormat=application%2Fjson',
+  format: new GeoJSON(),
+  crossOrigin: 'anonymous',
+});
+
 //Project work
 const vectorSource_projectw = new VectorSource({
   url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Av_wms_project_with_road&maxFeatures=50000&outputFormat=application%2Fjson',
@@ -1856,6 +1888,31 @@ const sh_layer = new VectorLayer({
 });
 
 
+const climate_rainfall_layer = new VectorLayer({
+  source: vectorSource_climate_rainfall,
+  style: new Style({
+    stroke: new Stroke({
+      color: 'green',
+      width: 3,
+    }),
+  }),
+  visible: false,
+});
+
+
+
+const climate_vulnerability_layer = new VectorLayer({
+  source: vectorSource_vlunerability_observation,
+  style: new Style({
+    stroke: new Stroke({
+      color: 'green',
+      width: 3,
+    }),
+  }),
+  visible: false,
+});
+
+
 const projectw_layer = new VectorLayer({
   source: vectorSource_projectw,
   style: new Style({
@@ -1887,6 +1944,18 @@ const sh_layer_theme = new ImageLayer({
   source: sh_layer_theme_source,
   visible: false,
 });
+
+const climate_rianfall_layer_theme = new ImageLayer({
+  source: climate_rainfall_layer_theme_source,
+  visible: false,
+});
+
+
+const climate_vulnerability_layer_theme = new ImageLayer({
+  source: climate_vulnerability_layer_theme_source,
+  visible: false,
+});
+
 
 
 //project work theme
@@ -2415,6 +2484,12 @@ layers.push(road_search_layer);
 
 layers.push(sh_layer);
 layers.push(sh_layer_theme);
+
+layers.push(climate_rainfall_layer);
+layers.push(climate_rianfall_layer_theme);
+
+layers.push(climate_vulnerability_layer);
+layers.push(climate_vulnerability_layer_theme);
 
 layers.push(mdr_layer);
 layers.push(mdr_layer_theme);
@@ -3351,6 +3426,17 @@ sh.onclick = function (e) {
   shView();
 }
 
+
+cl_rainfall.onclick = function (e) {
+  climateRainfallView();
+}
+
+
+vulner_observation.onclick = function (e) {
+  climateVulnerabilityView();
+}
+
+
 //add event to checkbox
 checkbox_mdr.onclick = function (e) {
  mdrView();
@@ -3618,6 +3704,8 @@ division_new.onchange=function(e) {
   odrView();
   mdrView();
   shView();
+  climateRainfallView();
+  climateVulnerabilityView();
   growthpointView();
   slopeView();
   urView();
@@ -3926,6 +4014,122 @@ function shView(){
     }
 
   }
+
+}
+
+
+
+
+
+function climateRainfallView(){
+
+  if (!cl_rainfall.checked) {
+    climate_rainfall_layer.setVisible(false);
+    climate_rianfall_layer_theme.setVisible(false);
+    
+    if(document.body.contains((document.getElementById("cl_rainfall_root")))==false){
+
+    }else{
+      document.getElementById("cl_rainfall_root").remove();
+      document.getElementById("cl_rainfall_image").style.display="none";
+    }
+  }
+
+ 
+
+    if (cl_rainfall.checked) {
+
+      if(document.body.contains((document.getElementById("cl_rainfall_root")))==false){
+
+      }else{
+        document.getElementById("cl_rainfall_root").remove();
+        document.getElementById("cl_rainfall_image").style.display="none";
+      }
+      document.getElementById("cl_rainfall_image").style.display="block";
+
+      if (vectorSource_climate_rainfall.getUrl()) {
+        vectorSource_climate_rainfall.clear();
+        vectorSource_climate_rainfall.refresh();
+      }
+
+      vectorSource_climate_rainfall.setUrl(domain_name+"ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Aclimate_average_rainfall&maxFeatures=50000&outputFormat=application%2Fjson");
+      //attachLoadingEvents(vectorSource_climate_rainfall);
+
+      climate_rainfall_layer_theme_source= new ImageWMS({
+        url: domain_name+'wms',
+        params: { "LAYERS": 'megrams:climate_average_rainfall'},
+        ratio: 1,
+        crossOrigin: 'anonymous',
+        serverType: 'geoserver',
+      });
+      climate_rianfall_layer_theme.setSource(climate_rainfall_layer_theme_source);
+
+      climate_rainfall_layer.setVisible(true);
+      climate_rianfall_layer_theme.setVisible(true);
+      //new
+      //lengendiv.style.display = "block";
+      const resolution = map.getView().getResolution();
+      updateLegend(climate_rianfall_layer_theme.getSource().getLegendUrl(resolution), 'cl_rainfall', 'Average Rainfall');
+
+    }
+
+}
+
+
+
+
+
+function climateVulnerabilityView(){
+
+  if (!vulner_observation.checked) {
+    climate_vulnerability_layer.setVisible(false);
+    climate_vulnerability_layer_theme.setVisible(false);
+    if(document.body.contains((document.getElementById("vulner_root")))==false){
+
+    }else{
+      document.getElementById("vulner_root").remove();
+      document.getElementById("vulner_image").style.display="none";
+    }
+  }
+
+    if (vulner_observation.checked) {
+
+      if(document.body.contains((document.getElementById("vulner_root")))==false){
+
+      }else{
+        document.getElementById("vulner_root").remove();
+        document.getElementById("vulner_image").style.display="none";
+      }
+      document.getElementById("vulner_image").style.display="block";
+
+      if (vectorSource_vlunerability_observation.getUrl()) {
+        vectorSource_vlunerability_observation.clear();
+        vectorSource_vlunerability_observation.refresh();
+      }
+
+      vectorSource_vlunerability_observation.setUrl(domain_name+"ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Aclimate_vulnerability_obseravtion&maxFeatures=50000&outputFormat=application%2Fjson");
+      //attachLoadingEvents(vectorSource_vlunerability_observationy);
+
+      climate_vulnerability_layer_theme_source= new ImageWMS({
+        url: domain_name+'wms',
+        params: { "LAYERS": 'megrams:climate_vulnerability_obseravtion'},
+        ratio: 1,
+        crossOrigin: 'anonymous',
+        serverType: 'geoserver',
+      });
+      //attachLoadingEvents(sh_layer_theme_source);
+
+      climate_vulnerability_layer_theme.setSource(climate_vulnerability_layer_theme_source);
+
+      climate_vulnerability_layer.setVisible(true);
+      climate_vulnerability_layer_theme.setVisible(true);
+      //new
+      //lengendiv.style.display = "block";
+      const resolution = map.getView().getResolution();
+      updateLegend(climate_vulnerability_layer_theme.getSource().getLegendUrl(resolution), 'vulner', 'Vulnerability Observation');
+
+    }
+
 
 }
 
