@@ -6,6 +6,7 @@ import { FullScreen, defaults as defaultControls } from 'ol/control';
 import 'ol/ol.css';
 import GeoJSON from 'ol/format/GeoJSON.js';
 import ImageWMS from 'ol/source/ImageWMS';
+import TileWMS from 'ol/source/TileWMS';
 import Map from 'ol/Map.js';
 import View from 'ol/View.js';
 import { DragBox, Select } from 'ol/interaction';
@@ -360,6 +361,23 @@ let road_roughness_source = new ImageWMS({
   serverType: 'geoserver',
 });
 
+
+let floodline_base_30_source = new TileWMS({
+  url: domain_name+'wms',
+  params: { "LAYERS": 'megrams:mv_base_30_year_flood',"TILED": true, "FORMAT": "image/png8"  },
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
+
+
+let floodline_projected_30_source = new TileWMS({
+  url: domain_name+'wms',
+  params: { "LAYERS": 'megrams:mv_projected_30_year_flood',"TILED": true, "FORMAT": "image/png8"  },
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
 
 
 // html2canvas(document.querySelector("#capture")).then(canvas => {
@@ -1720,6 +1738,24 @@ const road_roughness = new ImageLayer({
   visible: false,
 });
 
+//floodline base 30 theme
+const floodline_base_30 = new TileLayer({
+  source: floodline_base_30_source,
+  visible: false,
+  //minZoom: 9,   // don't render until zoomed in enough to matter
+  preload: 2,   // preload a couple of zoom levels for smoother panning
+});
+
+
+//floodline projected 30 theme
+const floodline_projected_30 = new TileLayer({
+  source: floodline_projected_30_source,
+  visible: false,
+  //minZoom: 9,   // don't render until zoomed in enough to matter
+  preload: 2,   // preload a couple of zoom levels for smoother panning
+});
+
+
 
 
 // bridge theme
@@ -2518,6 +2554,10 @@ layers.push(projectw_layer_theme);
 
 road_roughness.set('name','Road Roughness');
 layers.push(road_roughness);
+
+
+layers.push(floodline_base_30);
+layers.push(floodline_projected_30);
 
 layers.push(road_end_theme);
 
@@ -3474,6 +3514,17 @@ roug.onclick = function (e) {
   roughnessView();
 }
 
+
+base_30.onclick = function (e) {
+  floodlineBase30View();
+}
+
+
+projected_30.onclick = function (e) {
+  floodlineProjected30View();
+}
+
+
 bridge.onclick = function (e) {
   bridgeView();
 }
@@ -3710,6 +3761,7 @@ division_new.onchange=function(e) {
   slopeView();
   urView();
   roughnessView();
+  floodlineBase30View();
   boxslabView();
   calamityView();
   calamityStatusView();
@@ -4623,6 +4675,92 @@ function roughnessView(){
   }
 
 }
+
+
+function floodlineBase30View(){
+
+  if (!base_30.checked) {
+    floodline_base_30.setVisible(false); 
+    const root = document.getElementById("base_30_root");
+    if (root) {
+      root.remove();
+      document.getElementById("base_30_image").style.display = "none";
+    }
+    return;
+  }
+
+  const root = document.getElementById("base_30_root");
+  if (root) {
+    root.remove();
+    document.getElementById("base_30_image").style.display = "none";
+  }
+  document.getElementById("base_30_image").style.display = "block";
+
+  const divisionVal = document.getElementById('division_sel').value;
+  const wmsParams = { "LAYERS": 'megrams:mv_base_30_year_flood' };
+  // if (divisionVal !== "NA") {
+  //   wmsParams.CQL_FILTER = "jrdcn_short_code='" + divisionVal + "'";
+  // }
+
+  floodline_base_30_source = new TileWMS({         
+    url: domain_name + 'wms',
+    params: wmsParams,
+    serverType: 'geoserver',
+    crossOrigin: 'anonymous',
+  });
+  attachLoadingEvents(floodline_base_30_source);
+
+  floodline_base_30.setSource(floodline_base_30_source);
+  floodline_base_30.setVisible(true);
+
+  const resolution = map.getView().getResolution();
+  updateLegend(floodline_base_30.getSource().getLegendUrl(resolution), 'base_30', 'Flood 30 Year Baseline');
+}
+
+
+
+
+function floodlineProjected30View(){
+
+  if (!projected_30.checked) {
+    floodline_projected_30.setVisible(false); 
+    const root = document.getElementById("projected_30_root");
+    if (root) {
+      root.remove();
+      document.getElementById("projected_30_image").style.display = "none";
+    }
+    return;
+  }
+
+  const root = document.getElementById("projected_30_root");
+  if (root) {
+    root.remove();
+    document.getElementById("projected_30_image").style.display = "none";
+  }
+  document.getElementById("projected_30_image").style.display = "block";
+
+  const divisionVal = document.getElementById('division_sel').value;
+  const wmsParams = { "LAYERS": 'megrams:mv_projected_30_year_flood' };
+  // if (divisionVal !== "NA") {
+  //   wmsParams.CQL_FILTER = "jrdcn_short_code='" + divisionVal + "'";
+  // }
+
+  floodline_projected_30_source = new TileWMS({         
+    url: domain_name + 'wms',
+    params: wmsParams,
+    serverType: 'geoserver',
+    crossOrigin: 'anonymous',
+  });
+  attachLoadingEvents(floodline_projected_30_source);
+
+  floodline_projected_30.setSource(floodline_projected_30_source);
+  floodline_projected_30.setVisible(true);
+
+  const resolution = map.getView().getResolution();
+  updateLegend(floodline_projected_30.getSource().getLegendUrl(resolution), 'projected_30', 'Flood 30 Year Projected');
+}
+
+
 
 function rowView(){
 
