@@ -7563,8 +7563,6 @@ selectedFeatures.on(['add', 'remove'], function () {
 
   } else   if (assetclicked.startsWith('v_bridge_mst')) {
 
-    // alert("getting="+assetclicked);
-
     getBridgeInfo('BRDG',bridge_id);
 
     //overlay.setPosition(undefined);
@@ -7574,12 +7572,32 @@ selectedFeatures.on(['add', 'remove'], function () {
     // "</table>";
 
 
-  
+    if(intl_str_type=="BRDG"){
 
       content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
                           "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=brdgrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Bridge Inventory Report</a> </td></tr>" +
                           "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=brdgrptrating&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Bridge Condition</a> </td></tr>" +
                           "</table>";
+
+    }
+    else if (intl_str_type=="STEELBRDG"){
+
+      content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
+                          "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=steelbrdgrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Bridge Inventory Report</a> </td></tr>" +
+                          "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=steelbrdgrptgis&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Bridge Condition</a> </td></tr>" +
+                          "</table>";
+
+
+    }else if (intl_str_type=="SEMI_PERMANENT"){
+
+      content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
+                          "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=semiPermanentbrdgrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Bridge Inventory Report</a> </td></tr>" +
+                          "</table>";
+
+
+    }
+
+
 
 
   }
@@ -7606,7 +7624,7 @@ selectedFeatures.on(['add', 'remove'], function () {
 
   else   if (assetclicked.startsWith('v_box_culvert')) {
 
-    getBridgeInfo('CLVRT',bridge_id);
+    getBridgeInfo('BRDG',bridge_id);
 
     content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
                         "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=clvrtrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Box/Slab Culvert Inventory Report</a> </td></tr>" +
@@ -7618,8 +7636,8 @@ selectedFeatures.on(['add', 'remove'], function () {
   }
 
    else   if (assetclicked.startsWith('v_steel_bridge_mst')) {
-    
-    getBridgeInfo('STEELBRDG',bridge_id);
+
+    getBridgeInfo('BRDG',bridge_id);
 
     content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
                         "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=steelbrdgrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Box/Slab Culvert Inventory Report</a> </td></tr>" +
