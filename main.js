@@ -73,6 +73,7 @@ const workhistory=document.getElementById('workhistory');
 const viewgrowthpoint=document.getElementById('viewgrowthpoint');
 const viewslope=document.getElementById('viewslope');
 const boxslab = document.getElementById('bxslab');
+const steelbridge = document.getElementById('steelbridge');
 const ncisCheckbox = document.getElementById('ncis_status');
 
 const nh=document.getElementById('nh');
@@ -162,6 +163,15 @@ let facilities_cat_theme_source=new ImageWMS({
 let box_culvert_theme_source=new ImageWMS({
   url: domain_name+'wms',
   params: { "LAYERS": 'megrams:v_box_culvert'},
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
+
+
+let steelbridge_theme_source=new ImageWMS({
+  url: domain_name+'wms',
+  params: { "LAYERS": 'megrams:v_steel_bridge_mst'},
   ratio: 1,
   crossOrigin: 'anonymous',
   serverType: 'geoserver',
@@ -1050,6 +1060,13 @@ function onChange() {
     boxslabView();
   }
 
+  if(steelbridge.checked){
+    steelbridgeView();
+  }
+  if(!steelbridge.checked){
+    steelbridgeView();
+  }
+
 
   /// CULVERT LAYER CHANGE
   if(disaster.checked) {
@@ -1544,6 +1561,13 @@ const vectorSource_box_culvert = new VectorSource({
   crossOrigin: 'anonymous',
 });
 
+//Box Culvert
+const vectorSource_steelbridge = new VectorSource({
+  url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Av_steel_bridge_mst&maxFeatures=50000&outputFormat=application%2Fjson',
+  format: new GeoJSON(),
+  crossOrigin: 'anonymous',
+});
+
 
 // Traffic Station
 const vectorSource_traffic_station =  new VectorSource({
@@ -1782,6 +1806,12 @@ const facilities_theme = new ImageLayer({
 // bridge theme
 const box_culvert_theme = new ImageLayer({
   source: box_culvert_theme_source,
+  visible: false,
+});
+
+// steel bridge theme
+const steelbridge_theme = new ImageLayer({
+  source: steelbridge_theme_source,
   visible: false,
 });
 
@@ -2377,6 +2407,11 @@ const box_culvert_layer = new VectorLayer({
   visible: false,
 });
 
+const steelbridge_layer = new VectorLayer({
+  source: vectorSource_steelbridge,
+  visible: false,
+});
+
 
 const traffic_station_layer =  new VectorLayer({
   source: vectorSource_traffic_station,
@@ -2602,6 +2637,9 @@ layers.push( dynamic_ecis_facilities_within_road_buffer_layer);
 
 layers.push(box_culvert_theme);
 layers.push(box_culvert_layer);
+
+layers.push(steelbridge_theme);
+layers.push(steelbridge_layer);
 
 layers.push(calamity_layer);
 layers.push(viewgrowcalamity_theme);
@@ -3571,6 +3609,10 @@ boxslab.onclick= function (e) {
   boxslabView();
 }
 
+steelbridge.onclick= function (e) {
+  steelbridgeView();
+}
+
 disaster.onclick = function (e) {
   calamityView();
 }
@@ -3763,6 +3805,7 @@ division_new.onchange=function(e) {
   roughnessView();
   floodlineBase30View();
   boxslabView();
+  steelbridgeView();
   calamityView();
   calamityStatusView();
   amenitiesView();
@@ -5791,6 +5834,93 @@ function boxslabView(){
 }
 
 
+function steelbridgeView(){
+
+
+  if (!steelbridge.checked) {
+    steelbridge_layer.setVisible(false);
+    steelbridge_theme.setVisible(false);
+
+    if(document.body.contains((document.getElementById("steelbridge_root")))==false){
+
+    }else{
+      document.getElementById("steelbridge_root").remove();
+      document.getElementById("steelbridge_image").style.display="none";
+    }
+  }
+
+  if(document.getElementById('division_sel').value == "NA"){
+
+    if  (steelbridge.checked)  {
+
+      if(document.body.contains((document.getElementById("steelbridge_root")))==false){
+
+      }else{
+        document.getElementById("steelbridge_root").remove();
+        document.getElementById("steelbridge_image").style.display="none";
+      }
+      document.getElementById("steelbridge_image").style.display="block";
+
+      steelbridge_theme_source= new ImageWMS({
+          url: domain_name+'wms',
+          params: { "LAYERS": 'megrams:v_steel_bridge_mst'},
+          ratio: 1,
+          crossOrigin: 'anonymous',
+          serverType: 'geoserver',
+      });
+      attachLoadingEvents(steelbridge_theme_source);
+
+      steelbridge_layer.setVisible(true);
+      steelbridge_layer.setOpacity(0.1);
+
+      steelbridge_theme.setSource(steelbridge_theme_source);
+      steelbridge_theme.setVisible(true);
+
+      //lengendiv.style.display = "block";
+
+      const resolution = map.getView().getResolution();
+      updateLegend(steelbridge_theme.getSource().getLegendUrl(resolution), 'steelbridge', 'Steel Bridge');
+
+    }
+
+  }else{
+
+    if(steelbridge.checked) {
+
+        if(document.body.contains((document.getElementById("steelbridge_root")))==false){
+
+        }else{
+          document.getElementById("steelbridge_root").remove();
+          document.getElementById("steelbridge_image").style.display="none";
+        }
+        document.getElementById("steelbridge_image").style.display="block";
+
+        steelbridge_theme_source= new ImageWMS({
+          url: domain_name+ 'wms' ,
+          params: { "LAYERS": 'megrams:v_steel_bridge_mst', "CQL_FILTER": "jrdcn_short_code='"+document.getElementById('division_sel').value+"'"},
+          ratio: 1,
+          crossOrigin: 'anonymous',
+          serverType: 'geoserver',
+        });
+        attachLoadingEvents(steelbridge_theme_source);
+
+        steelbridge_layer.setVisible(true);
+        steelbridge_layer.setOpacity(0.1);
+
+        steelbridge_theme.setSource(steelbridge_theme_source);
+
+        steelbridge_theme.setVisible(true);
+
+        const resolution = map.getView().getResolution();
+        updateLegend(steelbridge_theme.getSource().getLegendUrl(resolution), 'steelbridge', 'Steel Bridge');
+    }
+  }
+
+}
+
+
+
+
 function slopeView(){
 
   if(!viewslope.checked) {
@@ -7186,6 +7316,23 @@ selectedFeatures.on(['add', 'remove'], function () {
 
 
       }
+
+      else if(assetclicked.startsWith('v_steel_bridge_mst'))
+    {
+      bridge_id=feature.get('bridge_id');
+      var bridge_cat=feature.get('bridge_cat');
+      var road_name=feature.get('road_name');
+      var start_chainage=feature.get('start_chainage');
+      var district=feature.get('district');
+      var block=feature.get('jrdcn_name');
+      intl_str_type = feature.get('intl_str_typ');
+      var structure_type = feature.get('structure_type');
+      //roadname=bridge_cat;
+      roadname="<table><tr><td>District:</td><td>"+district+"</td></tr><tr><td>Sub-Division: </td><td>"+block+"</td></tr><tr><td colspan=2>Road Name: "+road_name+"</br></td></tr>"+"<tr><td>Chainage(km): </td><td>"+start_chainage+"</td></tr><tr><td>"+"Bridge Type: </td><td>"+bridge_cat+"</td></tr><tr><td>"+"Structure Type: </td><td>"+structure_type+"</td></tr></table>";
+
+
+
+      }  
     else if(assetclicked.startsWith('v_road_clvrt_inf'))
     {
 
@@ -7482,6 +7629,19 @@ selectedFeatures.on(['add', 'remove'], function () {
     content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
                         "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=clvrtrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Box/Slab Culvert Inventory Report</a> </td></tr>" +
                         "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=clvrtrptcongis&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Box/Slab Culvert Condition</a> </td></tr>" +
+                        "</table>";
+
+
+
+  }
+
+   else   if (assetclicked.startsWith('v_steel_bridge_mst')) {
+
+    getBridgeInfo('BRDG',bridge_id);
+
+    content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
+                        "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=steelbrdgrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Box/Slab Culvert Inventory Report</a> </td></tr>" +
+                        "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=steelbrdgrptcon&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Box/Slab Culvert Condition</a> </td></tr>" +
                         "</table>";
 
 
