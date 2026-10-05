@@ -74,6 +74,7 @@ const viewgrowthpoint=document.getElementById('viewgrowthpoint');
 const viewslope=document.getElementById('viewslope');
 const boxslab = document.getElementById('bxslab');
 const steelbridge = document.getElementById('steelbridge');
+const semibridge = document.getElementById('semibridge');
 const ncisCheckbox = document.getElementById('ncis_status');
 
 const nh=document.getElementById('nh');
@@ -172,6 +173,14 @@ let box_culvert_theme_source=new ImageWMS({
 let steelbridge_theme_source=new ImageWMS({
   url: domain_name+'wms',
   params: { "LAYERS": 'megrams:v_steel_bridge_mst'},
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
+
+let semibridge_theme_source=new ImageWMS({
+  url: domain_name+'wms',
+  params: { "LAYERS": 'megrams:v_semi_permanent_mst'},
   ratio: 1,
   crossOrigin: 'anonymous',
   serverType: 'geoserver',
@@ -1067,6 +1076,13 @@ function onChange() {
     steelbridgeView();
   }
 
+  if(semibridge.checked){
+    semibridgeView();
+  }
+  if(!semibridge.checked){
+    semibridgeView();
+  }
+
 
   /// CULVERT LAYER CHANGE
   if(disaster.checked) {
@@ -1561,9 +1577,16 @@ const vectorSource_box_culvert = new VectorSource({
   crossOrigin: 'anonymous',
 });
 
-//Box Culvert
+//Steel Bridge
 const vectorSource_steelbridge = new VectorSource({
   url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Av_steel_bridge_mst&maxFeatures=50000&outputFormat=application%2Fjson',
+  format: new GeoJSON(),
+  crossOrigin: 'anonymous',
+});
+
+//Semi permanent Bridge
+const vectorSource_semibridge = new VectorSource({
+  url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Av_semi_permanent_mst&maxFeatures=50000&outputFormat=application%2Fjson',
   format: new GeoJSON(),
   crossOrigin: 'anonymous',
 });
@@ -1812,6 +1835,13 @@ const box_culvert_theme = new ImageLayer({
 // steel bridge theme
 const steelbridge_theme = new ImageLayer({
   source: steelbridge_theme_source,
+  visible: false,
+});
+
+
+// steel bridge theme
+const semibridge_theme = new ImageLayer({
+  source: semibridge_theme_source,
   visible: false,
 });
 
@@ -2412,6 +2442,11 @@ const steelbridge_layer = new VectorLayer({
   visible: false,
 });
 
+const semibridge_layer = new VectorLayer({
+  source: vectorSource_semibridge,
+  visible: false,
+});
+
 
 const traffic_station_layer =  new VectorLayer({
   source: vectorSource_traffic_station,
@@ -2640,6 +2675,9 @@ layers.push(box_culvert_layer);
 
 layers.push(steelbridge_theme);
 layers.push(steelbridge_layer);
+
+layers.push(semibridge_theme);
+layers.push(semibridge_layer);
 
 layers.push(calamity_layer);
 layers.push(viewgrowcalamity_theme);
@@ -3613,6 +3651,10 @@ steelbridge.onclick= function (e) {
   steelbridgeView();
 }
 
+semibridge.onclick= function (e) {
+  semibridgeView();
+}
+
 disaster.onclick = function (e) {
   calamityView();
 }
@@ -3806,6 +3848,7 @@ division_new.onchange=function(e) {
   floodlineBase30View();
   boxslabView();
   steelbridgeView();
+  semibridgeView();
   calamityView();
   calamityStatusView();
   amenitiesView();
@@ -5920,6 +5963,90 @@ function steelbridgeView(){
 
 
 
+function semibridgeView(){
+
+
+  if (!semibridge.checked) {
+    semibridge_layer.setVisible(false);
+    semibridge_theme.setVisible(false);
+
+    if(document.body.contains((document.getElementById("semibridge_root")))==false){
+
+    }else{
+      document.getElementById("semibridge_root").remove();
+      document.getElementById("semibridge_image").style.display="none";
+    }
+  }
+
+  if(document.getElementById('division_sel').value == "NA"){
+
+    if  (semibridge.checked)  {
+
+      if(document.body.contains((document.getElementById("semibridge_root")))==false){
+
+      }else{
+        document.getElementById("semibridge_root").remove();
+        document.getElementById("semibridge_image").style.display="none";
+      }
+      document.getElementById("semibridge_image").style.display="block";
+
+      semibridge_theme_source= new ImageWMS({
+          url: domain_name+'wms',
+          params: { "LAYERS": 'megrams:v_semi_permanent_mst'},
+          ratio: 1,
+          crossOrigin: 'anonymous',
+          serverType: 'geoserver',
+      });
+      attachLoadingEvents(semibridge_theme_source);
+
+      semibridge_layer.setVisible(true);
+      semibridge_layer.setOpacity(0.1);
+
+      semibridge_theme.setSource(semibridge_theme_source);
+      semibridge_theme.setVisible(true);
+
+      //lengendiv.style.display = "block";
+
+      const resolution = map.getView().getResolution();
+      updateLegend(semibridge_theme.getSource().getLegendUrl(resolution), 'semibridge', 'Semi Permanent Bridge');
+
+    }
+
+  }else{
+
+    if(semibridge.checked) {
+
+        if(document.body.contains((document.getElementById("semibridge_root")))==false){
+
+        }else{
+          document.getElementById("semibridge_root").remove();
+          document.getElementById("semibridge_image").style.display="none";
+        }
+        document.getElementById("semibridge_image").style.display="block";
+
+        semibridge_theme_source= new ImageWMS({
+          url: domain_name+ 'wms' ,
+          params: { "LAYERS": 'megrams:v_semi_permanent_mst', "CQL_FILTER": "jrdcn_short_code='"+document.getElementById('division_sel').value+"'"},
+          ratio: 1,
+          crossOrigin: 'anonymous',
+          serverType: 'geoserver',
+        });
+        attachLoadingEvents(semibridge_theme_source);
+
+        semibridge_layer.setVisible(true);
+        semibridge_layer.setOpacity(0.1);
+
+        semibridge_theme.setSource(semibridge_theme_source);
+
+        semibridge_theme.setVisible(true);
+
+        const resolution = map.getView().getResolution();
+        updateLegend(semibridge_theme.getSource().getLegendUrl(resolution), 'semibridge', 'Semi Permanent Bridge');
+    }
+  }
+
+}
+
 
 function slopeView(){
 
@@ -7333,6 +7460,23 @@ selectedFeatures.on(['add', 'remove'], function () {
 
 
       }  
+
+       else if(assetclicked.startsWith('v_semi_permanent_mst'))
+    {
+      bridge_id=feature.get('bridge_id');
+      var bridge_cat=feature.get('bridge_cat');
+      var road_name=feature.get('road_name');
+      var start_chainage=feature.get('start_chainage');
+      var district=feature.get('district');
+      var block=feature.get('jrdcn_name');
+      intl_str_type = feature.get('intl_str_typ');
+      var structure_type = feature.get('structure_type');
+      //roadname=bridge_cat;
+      roadname="<table><tr><td>District:</td><td>"+district+"</td></tr><tr><td>Sub-Division: </td><td>"+block+"</td></tr><tr><td colspan=2>Road Name: "+road_name+"</br></td></tr>"+"<tr><td>Chainage(km): </td><td>"+start_chainage+"</td></tr><tr><td>"+"Bridge Type: </td><td>"+bridge_cat+"</td></tr><tr><td>"+"Structure Type: </td><td>"+structure_type+"</td></tr></table>";
+
+
+
+      }  
     else if(assetclicked.startsWith('v_road_clvrt_inf'))
     {
 
@@ -7625,6 +7769,18 @@ selectedFeatures.on(['add', 'remove'], function () {
                         "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=steelbrdgrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Box/Slab Culvert Inventory Report</a> </td></tr>" +
                         "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=steelbrdgrptcon&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Box/Slab Culvert Condition</a> </td></tr>" +
                         "</table>";
+
+
+
+  }
+
+   else   if (assetclicked.startsWith('v_semi_permanent_mst')) {
+    
+    getBridgeInfo('SEMI_PERMANENT',bridge_id);
+
+    content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
+                          "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=semiPermanentbrdgrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Bridge Inventory Report</a> </td></tr>" +
+                          "</table>";
 
 
 
