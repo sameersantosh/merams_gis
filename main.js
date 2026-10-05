@@ -59,6 +59,8 @@ const video_src=document.getElementById('video_src');
 //const asset_image_list=document.getElementById('asset_image_list');
 const closer = document.getElementById('popup-closer');
 const checkbox_sh = document.getElementById('sh');
+const checkbox_pmgsy1 = document.getElementById('pmgsy1');
+const checkbox_pmgsy2 = document.getElementById('pmgsy2');
 
 const checkbox_mdr = document.getElementById('mdr');
 const checkbox_odr = document.getElementById('odr');
@@ -301,6 +303,15 @@ let mdr_layer_theme_source = new ImageWMS({
 let sh_layer_theme_source= new ImageWMS({
   url: domain_name+'wms',
   params: { "LAYERS": 'megrams:state_highway'},
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
+
+
+let pmgsy1_layer_theme_source= new ImageWMS({
+  url: domain_name+'wms',
+  params: { "LAYERS": 'megrams:v_meghalaya_pmgsy_roads'},
   ratio: 1,
   crossOrigin: 'anonymous',
   serverType: 'geoserver',
@@ -896,6 +907,17 @@ function onChange() {
     shView();
   }
 
+
+   /// PMGSY1 LAYER CHANGE
+  if(pmgsy1.checked)
+  {
+    pmgsy1View();
+  }
+  if(!pmgsy1.checked)
+  {
+    pmgsy1View();
+  }
+
   /// MDR LAYER CHANGE
   if(checkbox_mdr.checked)
   {
@@ -1373,6 +1395,14 @@ const vectorSource_ur = new VectorSource({
 //State Highway
 const vectorSource_sh = new VectorSource({
   url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Astate_highway&maxFeatures=50000&outputFormat=application%2Fjson',
+  format: new GeoJSON(),
+  crossOrigin: 'anonymous',
+});
+
+
+//PMGSY1 Highway
+const vectorSource_pmgsy1 = new VectorSource({
+  url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Av_meghalaya_pmgsy_roads&maxFeatures=50000&outputFormat=application%2Fjson',
   format: new GeoJSON(),
   crossOrigin: 'anonymous',
 });
@@ -1984,6 +2014,18 @@ const sh_layer = new VectorLayer({
 });
 
 
+const pmgsy1_layer = new VectorLayer({
+  source: vectorSource_pmgsy1,
+  style: new Style({
+    stroke: new Stroke({
+      color: 'green',
+      width: 3,
+    }),
+  }),
+  visible: false,
+});
+
+
 const climate_rainfall_layer = new VectorLayer({
   source: vectorSource_climate_rainfall,
   style: new Style({
@@ -2038,6 +2080,13 @@ const projectw_layer = new VectorLayer({
 //state highway theme
 const sh_layer_theme = new ImageLayer({
   source: sh_layer_theme_source,
+  visible: false,
+});
+
+
+//pmgsy theme
+const pmgsy1_layer_theme = new ImageLayer({
+  source: pmgsy1_layer_theme_source,
   visible: false,
 });
 
@@ -2590,6 +2639,9 @@ layers.push(road_search_layer);
 
 layers.push(sh_layer);
 layers.push(sh_layer_theme);
+
+layers.push(pmgsy1_layer);
+layers.push(pmgsy1_layer_theme);
 
 layers.push(climate_rainfall_layer);
 layers.push(climate_rianfall_layer_theme);
@@ -3543,6 +3595,11 @@ sh.onclick = function (e) {
 }
 
 
+pmgsy1.onclick = function (e) {
+  pmgsy1View();
+}
+
+
 cl_rainfall.onclick = function (e) {
   climateRainfallView();
 }
@@ -4148,6 +4205,107 @@ function shView(){
       //lengendiv.style.display = "block";
       const resolution = map.getView().getResolution();
       updateLegend(sh_layer_theme.getSource().getLegendUrl(resolution), 'sh', 'State Highway');
+
+    }
+
+  }
+
+}
+
+
+
+
+
+function pmgsy1View(){
+
+  if (!pmgsy1.checked) {
+    pmgsy1_layer.setVisible(false);
+    pmgsy1_layer_theme.setVisible(false);
+    if(document.body.contains((document.getElementById("pmgsy1_root")))==false){
+
+    }else{
+      document.getElementById("pmgsy1_root").remove();
+      document.getElementById("pmgsy1_image").style.display="none";
+    }
+  }
+
+  if(document.getElementById('division_sel').value =="NA"){
+
+    if (pmgsy1.checked) {
+
+      if(document.body.contains((document.getElementById("pmgsy1_root")))==false){
+
+      }else{
+        document.getElementById("pmgsy1_root").remove();
+        document.getElementById("pmgsy1_image").style.display="none";
+      }
+      document.getElementById("pmgsy1_image").style.display="block";
+
+      if (vectorSource_pmgsy1.getUrl()) {
+        vectorSource_pmgsy1.clear();
+        vectorSource_pmgsy1.refresh();
+      }
+
+      vectorSource_pmgsy1.setUrl(domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Av_meghalaya_pmgsy_roads&maxFeatures=50000&outputFormat=application%2Fjson');
+      attachLoadingEvents(vectorSource_pmgsy1);
+
+      pmgsy1_layer_theme_source= new ImageWMS({
+        url: domain_name+'wms',
+        params: { "LAYERS": 'megrams:v_meghalaya_pmgsy_roads'},
+        ratio: 1,
+        crossOrigin: 'anonymous',
+        serverType: 'geoserver',
+      });
+      attachLoadingEvents(pmgsy1_layer_theme_source);
+
+      pmgsy1_layer_theme.setSource(pmgsy1_layer_theme_source);
+
+      pmgsy1_layer.setVisible(true);
+      pmgsy1_layer_theme.setVisible(true);
+      //new
+      //lengendiv.style.display = "block";
+      const resolution = map.getView().getResolution();
+      updateLegend(pmgsy1_layer_theme.getSource().getLegendUrl(resolution), 'pmgsy1', 'PMGSY Roads');
+
+    }
+
+  }else{
+
+    if (pmgsy1.checked) {
+
+      if(document.body.contains((document.getElementById("pmgsy1_root")))==false){
+
+      }else{
+        document.getElementById("pmgsy1_root").remove();
+        document.getElementById("pmgsy1_image").style.display="none";
+      }
+      document.getElementById("pmgsy1_image").style.display="block";
+
+      if (vectorSource_pmgsy1.getUrl()) {
+        vectorSource_pmgsy1.clear();
+        vectorSource_pmgsy1.refresh();
+      }
+
+      vectorSource_pmgsy1.setUrl(domain_name+"ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Av_meghalaya_pmgsy_roads&maxFeatures=50000&outputFormat=application%2Fjson&CQL_FILTER=jrdcn_short_code='"+document.getElementById('division_sel').value+"'");
+      attachLoadingEvents(vectorSource_pmgsy1);
+
+      pmgsy1_layer_theme_source= new ImageWMS({
+        url: domain_name+'wms',
+        params: { "LAYERS": 'megrams:v_meghalaya_pmgsy_roads'},
+        ratio: 1,
+        crossOrigin: 'anonymous',
+        serverType: 'geoserver',
+      });
+      attachLoadingEvents(pmgsy1_layer_theme_source);
+
+      pmgsy1_layer_theme.setSource(pmgsy1_layer_theme_source);
+
+      pmgsy1_layer.setVisible(true);
+      pmgsy1_layer_theme.setVisible(true);
+      //new
+      //lengendiv.style.display = "block";
+      const resolution = map.getView().getResolution();
+      updateLegend(pmgsy1_layer_theme.getSource().getLegendUrl(resolution), 'pmgsy1', 'PMGSY Roads');
 
     }
 
@@ -7328,6 +7486,44 @@ selectedFeatures.on(['add', 'remove'], function () {
 
 
 
+    else if(assetclicked.startsWith('v_meghalaya_pmgsy_roads'))
+    {
+   // alert("gettingdata="+assetclicked);
+    bridge_id=feature.get('rams_id');
+    var work_name=feature.get('work_name');
+    var mrl_id=feature.get('mrl_id');
+    var state = feature.get('state');
+    var cn_code = feature.get('cn_code');
+    var work_name = feature.get('work_name');
+    var block_id = feature.get('block_id');
+    var block_name = feature.get('block_name');
+    var proposed_length = feature.get('proposed_length');
+    var sanctioned_amount = feature.get('sanctioned_amount');
+    var scheme_type = feature.get('scheme_type');
+    var district_id = feature.get('district_id');
+    var lgd_district_code = feature.get('lgd_district_code');
+    var ims_year = feature.get('ims_year');
+    var ims_batch = feature.get('ims_batch');
+
+
+    //roadname=bridge_cat;
+   var roadname =
+    "<table>" +
+    "<tr><td>MRL ID: </td><td>" + mrl_id + "</td></tr>" +
+    "<tr><td>State: </td><td>" + state + "</td></tr>" +
+    "<tr><td>CN Code: </td><td>" + cn_code + "</td></tr>" +
+    "<tr><td>Work Name: </td><td>" + work_name + "</td></tr>" +
+    "<tr><td>Block ID: </td><td>" + block_id + "</td></tr>" +
+    "<tr><td>Block Name: </td><td>" + block_name + "</td></tr>" +
+    "<tr><td>Proposed Length: </td><td>" + proposed_length + "</td></tr>" +
+    "<tr><td>Sanctioned Amount: </td><td>" + sanctioned_amount + "</td></tr>" +
+    "<tr><td>Scheme Type: </td><td>" + scheme_type + "</td></tr>" +
+    "<tr><td>District ID: </td><td>" + district_id + "</td></tr>" +
+    "<tr><td>LGD District Code: </td><td>" + lgd_district_code + "</td></tr>" +
+    "<tr><td>IMS Year: </td><td>" + ims_year + "</td></tr>" +
+    "<tr><td>IMS Batch: </td><td>" + ims_batch + "</td></tr>" +
+    "</table>";
+    }
     else if(assetclicked.startsWith('v_bridge_mst'))
     {
     bridge_id=feature.get('bridge_id');
@@ -7723,6 +7919,18 @@ selectedFeatures.on(['add', 'remove'], function () {
       content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
                           "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=brdgrpt&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Bridge Inventory Report</a> </td></tr>" +
                           "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=brdgrptrating&bridgeid=" + bridge_id + "&isupdn=A' target='_new'>Bridge Condition</a> </td></tr>" +
+                          "</table>";
+
+
+  }
+
+  else   if (assetclicked.startsWith('v_meghalaya_pmgsy_roads')) {
+
+    // alert("getting="+assetclicked);
+
+   // getBridgeInfo('PMGSY',bridge_id);
+
+      content.innerHTML = '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' + names.join(', ') + "<table class='border' style='width: 100%;background:#746a6a;'>"+
                           "</table>";
 
 
