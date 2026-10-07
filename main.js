@@ -2048,7 +2048,6 @@ const pmgsy1_layer = new VectorLayer({
   source: vectorSource_pmgsy1,
   style: new Style({
     stroke: new Stroke({
-      color: 'green',
       width: 3,
     }),
   }),
@@ -2059,7 +2058,6 @@ const pmgsy2_layer = new VectorLayer({
   source: vectorSource_pmgsy2,
   style: new Style({
     stroke: new Stroke({
-      color: 'green',
       width: 3,
     }),
   }),
@@ -8361,13 +8359,14 @@ else if ((assetclicked || '').toLowerCase().includes('v_meghalaya_pmgsy_roads'))
             '&outputFormat=csv';
     };
 
-    var pmgsyBtnRow = function (id, label, value) {
+    // one <td> per button, with hover tooltip
+    var pmgsyBtnCell = function (id, label, value, tooltip) {
         if (!value) return '';   // skip buttons with no value
-        return "<tr><td style='padding:6px;text-align:center;'>" +
-               "<button id='" + id + "' " +
+        return "<td style='padding:6px;text-align:center;width:50%;'>" +
+               "<button id='" + id + "' title=\"" + tooltip + "\" " +
                "style='color:white;font-weight:bold;background:transparent;" +
                "border:none;cursor:pointer;font-size:13px;'>" +
-               label + "</button></td></tr>";
+               label + "</button></td>";
     };
 
     var bindPmgsyDownload = function (btnId, url, fileName) {
@@ -8414,10 +8413,25 @@ else if ((assetclicked || '').toLowerCase().includes('v_meghalaya_pmgsy_roads'))
         names.join(', ') +
         '</p>' +
         "<table class='border' style='width:100%;background:#746a6a;'>" +
-            pmgsyBtnRow('dl-pmgsy-rams-btn',
-                        '⬇ Download PMGSY Road', rid) +
-            pmgsyBtnRow('dl-pmgsy-scheme-btn',
-                        '⬇ Download PMGSY Road ALL', stype) +
+            // ---- Title row (spans both columns) ----
+            // "<tr>" +
+            // "<td colspan='2' style='padding:8px;text-align:center;color:white;" +
+            // "font-weight:bold;font-size:13px;background:#5c7a60;" +
+            // "border-bottom:1px solid #ffffff40;'>" +
+            // "PMGSY Road Download" +
+            // "</td>" +
+            // "</tr>" +
+            // ---- Both buttons in ONE row ----
+            "<tr>" +
+                pmgsyBtnCell('dl-pmgsy-rams-btn',
+                             '⬇ Selected',
+                             rid,
+                             'Download CSV for selected Road') +
+                pmgsyBtnCell('dl-pmgsy-scheme-btn',
+                             '⬇ ALL',
+                             stype,
+                             'Download CSV for all Scheme Type') +
+            "</tr>" +
         "</table>";
 
     bindPmgsyDownload(
