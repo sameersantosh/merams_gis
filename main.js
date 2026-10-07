@@ -1196,6 +1196,7 @@ var intl_str_type="";
 var calamity_id="";
 var project_id="";
 var rams_id="";
+var scheme_type="";
 
 //var csrf_token="";
 
@@ -7727,7 +7728,7 @@ selectedFeatures.on(['add', 'remove'], function () {
     var block_name = feature.get('block_name');
     var proposed_length = feature.get('proposed_length');
     var sanctioned_amount = feature.get('sanctioned_amount');
-    var scheme_type = feature.get('scheme_type');
+    scheme_type = feature.get('scheme_type');
     var district_id = feature.get('district_id');
     var lgd_district_code = feature.get('lgd_district_code');
     var ims_year = feature.get('ims_year');
@@ -8196,20 +8197,90 @@ selectedFeatures.on(['add', 'remove'], function () {
 // }
 
 
-  else if ((assetclicked || '').toLowerCase().includes('v_meghalaya_pmgsy_roads')) {
+//   else if ((assetclicked || '').toLowerCase().includes('v_meghalaya_pmgsy_roads')) {
+
+//     //var rams_id = feature.get('rams_id');
+//     if (rams_id == null || String(rams_id).trim() === '') {
+//         alert('RAMS ID not found');
+//         return;
+//     }
+//     rams_id = String(rams_id).trim();
+
+//     var csvUrl = domain_name +
+//         'ows?service=WFS&version=1.0.0&request=GetFeature' +
+//         '&typeName=megrams%3Av_meghalaya_pmgsy_roads' +
+//         '&propertyName=rams_id,mrl_id,state,cn_code,work_name,block_id,block_name,proposed_length,sanctioned_amount,scheme_type,district_id,lgd_district_code,ims_year,ims_batch' +
+//         '&CQL_FILTER=' + encodeURIComponent("rams_id='" + rams_id + "'") +
+//         '&outputFormat=csv';
+
+//     content.innerHTML =
+//         '<p class="border" style="color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;">' +
+//         names.join(', ') +
+//         '</p>' +
+//         "<table class='border' style='width:100%;background:#746a6a;'>" +
+//         "<tr>" +
+//         "<td style='padding:8px;text-align:center;'>" +
+//         "<button id='dl-pmgsy-btn' " +
+//         "style='color:white;font-weight:bold;background:transparent;border:none;cursor:pointer;font-size:13px;'>" +
+//         "⬇ Download PMGSY Road CSV" +
+//         "</button>" +
+//         "</td>" +
+//         "</tr>" +
+//         "</table>";
+
+//     document.getElementById('dl-pmgsy-btn').addEventListener('click', function () {
+//         var btn = this;
+//         var oldText = btn.textContent;
+//         btn.textContent = 'Downloading...';
+//         btn.disabled = true;
+
+//         fetch(csvUrl)
+//             .then(function (res) {
+//                 if (!res.ok) throw new Error('HTTP ' + res.status);
+//                 return res.blob();
+//             })
+//             .then(function (blob) {
+//                 // Optional: sanity check that it's actually a CSV and not an XML error
+//                 if (blob.size === 0) throw new Error('Empty response');
+
+//                 var url = URL.createObjectURL(blob);
+//                 var a = document.createElement('a');
+//                 a.href = url;
+//                 a.download = 'pmgsy_road_' + rams_id + '.csv';
+//                 document.body.appendChild(a);
+//                 a.click();
+//                 document.body.removeChild(a);
+//                 URL.revokeObjectURL(url);
+
+//                 btn.textContent = oldText;
+//                 btn.disabled = false;
+//             })
+//             .catch(function (err) {
+//                 console.error('CSV download failed:', err);
+//                 alert('Download failed: ' + err.message);
+//                 btn.textContent = oldText;
+//                 btn.disabled = false;
+//             });
+//     });
+// }
+
+
+
+
+ else if ((assetclicked || '').toLowerCase().includes('v_meghalaya_pmgsy_roads')) {
 
     //var rams_id = feature.get('rams_id');
-    if (rams_id == null || String(rams_id).trim() === '') {
+    if (scheme_type == null || String(scheme_type).trim() === '') {
         alert('RAMS ID not found');
         return;
     }
-    rams_id = String(rams_id).trim();
+    scheme_type = String(scheme_type).trim();
 
     var csvUrl = domain_name +
         'ows?service=WFS&version=1.0.0&request=GetFeature' +
         '&typeName=megrams%3Av_meghalaya_pmgsy_roads' +
         '&propertyName=rams_id,mrl_id,state,cn_code,work_name,block_id,block_name,proposed_length,sanctioned_amount,scheme_type,district_id,lgd_district_code,ims_year,ims_batch' +
-        '&CQL_FILTER=' + encodeURIComponent("rams_id='" + rams_id + "'") +
+        '&CQL_FILTER=' + encodeURIComponent("scheme_type='" + scheme_type + "'") +
         '&outputFormat=csv';
 
     content.innerHTML =
@@ -8245,7 +8316,7 @@ selectedFeatures.on(['add', 'remove'], function () {
                 var url = URL.createObjectURL(blob);
                 var a = document.createElement('a');
                 a.href = url;
-                a.download = 'pmgsy_road_' + rams_id + '.csv';
+                a.download = 'pmgsy_road_' + scheme_type + '.csv';
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
