@@ -999,7 +999,7 @@ border-bottom-right-radius: 0;
             <td><label for="gridaccident">Grid Density</label></td>
             <td> <input id="gridaccident" type="checkbox" value="gridaccident" autocomplete="off"/></td>
           </tr>
-          <tr>
+          <tr style="display: none">
             <td><label for="blackspotaccident">Black Spot</label></td>
             <td> <input id="blackspotaccident" type="checkbox" value="blackspotaccident" autocomplete="off"/></td>
           </tr>
@@ -1019,6 +1019,26 @@ border-bottom-right-radius: 0;
             <td><label for="projected_30">Flood 30 Year Projected</label></td>
             <td> <input id="projected_30" type="checkbox" value="projected_30" autocomplete="off"/></td>
           </tr>
+          <tr>
+            <td><label for="edar_accident">eDAR Accident</label></td>
+            <td>
+              <input id="edar_accident" type="checkbox" value="edar_accident" autocomplete="off"/>
+              <button type="button" id="edarFilterBtn" title="Filter by Year"
+                      style="margin-left:6px; padding:2px 6px; font-size:11px; border:none; border-radius:4px; cursor:pointer; background:#0d6efd; color:white;">
+                <i class="fa fa-filter"></i>
+              </button>
+            </td>
+          </tr>
+          <tr>
+          <td><label for="edar_black_spot">eDAR Black Spot</label></td>
+          <td>
+            <input id="edar_black_spot" type="checkbox" value="edar_black_spot" autocomplete="off"/>
+            <button type="button" id="edarBlackSpotInfoBtn" title="How is Black Spot calculated?"
+                    style="margin-left:6px; padding:2px 6px; font-size:11px; border:none; border-radius:4px; cursor:pointer; background:#6c757d; color:white;">
+              <i class="fa fa-info-circle"></i>
+            </button>
+          </td>
+        </tr>
           <!-- <tr>
             <td><label for="project_status">Project Status</label></td>
             <td> <input id="project_status" type="checkbox" value="project_status" autocomplete="off"/></td>
@@ -1736,6 +1756,16 @@ border-bottom-right-radius: 0;
             <img height="15" width="15" src="./images/amenities.png" /> -->
           </div>
 
+          <div id="edar_accident_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">eDAR Accident<br></span>
+            <img height="30" width="30" src="./images/edar_accident.png" />
+          </div>
+
+           <div id="edar_black_spot_image" class="block" style="display: none; float: left; text-align: left; margin: 7px;">
+            <span style="background-color: #c2d6d6; margin-bottom: 2px;">eDAR Black Spot<br></span>
+            <img height="30" width="30" src="./images/edar_black_spot.png" />
+          </div>
+
 
         </div>
 
@@ -1744,6 +1774,81 @@ border-bottom-right-radius: 0;
 
     </div>
 
+
+    <!-- eDAR Accident Year Selection Modal -->
+    <div class="modal fade" id="edarAccidentModal" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title"><i class="fa fa-filter text-primary"></i> eDAR Accident — Filter by Year</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="edarYearSelect" class="form-label fw-bold">Year</label>
+              <select id="edarYearSelect" class="form-select"></select>
+            </div>
+
+             <div class="mb-3">
+              <label for="edarRoadCatSelect" class="form-label fw-bold">Road Classification</label>
+              <select id="edarRoadCatSelect" class="form-select">
+                <option value="ALL">-- All Categories --</option>
+                <option value="Expressway">Expressway</option>
+                <option value="Sub-Arterial Road">Sub-Arterial Road</option>
+                <option value="Local Road">Local Road</option>
+                <option value="NA">NA</option>
+                <option value="Other District Road">Other District Road</option>
+                <option value="Arterial Road">Arterial Road</option>
+                <option value="State Highway">State Highway</option>
+                <option value="Village Road">Village Road</option>
+                <option value="Major District Road">Major District Road</option>
+                <option value="National Highway">National Highway</option>
+              </select>
+            </div>
+
+            <div class="alert alert-info small mb-0">
+              <i class="fa fa-info-circle"></i> Apply to reload layer with selected year. Or download the CSV.
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-success" id="edarDownloadBtn">
+              <i class="fa fa-download"></i> Download
+            </button>
+            <button type="button" class="btn btn-primary" id="edarApplyBtn">
+              <i class="fa fa-check"></i> Apply
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+   <!-- eDAR Black Spot — Info Modal -->
+  <div class="modal fade" id="edarBlackSpotInfoModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">
+            <i class="fa fa-info-circle text-primary"></i>Black Spot
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>
+            Accident data reported over the last three years is mapped precisely onto the state's road network to determine exact crash locations. The system groups these accidents into localized zones, clustering any incidents that occur within 500 meters of each other on the same road. If a specific 500-meter stretch records more than 3 accidents or more than 5 fatalities, it is flagged and highlighted as a "Black Spot" with a red and black dotted line for safety review.
+          </p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-success" id="edarBlackSpotDownloadBtn">
+            <i class="fa fa-download"></i> Download
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>  
   
 </body>
 

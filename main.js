@@ -417,6 +417,35 @@ let floodline_projected_30_source = new TileWMS({
   serverType: 'geoserver',
 });
 
+// eDAR Accident theme source & layer
+let edar_accident_theme_source = new ImageWMS({
+  url: domain_name + 'wms',
+  params: { "LAYERS": 'megrams:v_edar_accident' },
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
+
+const edar_accident_theme = new ImageLayer({
+  source: edar_accident_theme_source,
+  visible: false,
+});
+
+
+// eDAR Black Spot — WMS theme source + layer (styled server-side)
+let edar_black_spot_theme_source = new ImageWMS({
+  url: domain_name + 'wms',
+  params: { "LAYERS": 'megrams:v_edar_black_spot' },
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
+
+const edar_black_spot_theme = new ImageLayer({
+  source: edar_black_spot_theme_source,
+  visible: false,
+});
+
 
 // html2canvas(document.querySelector("#capture")).then(canvas => {
 //   alert("hello");
@@ -1493,6 +1522,12 @@ const vectorSource_nh= new VectorSource({
 });
 
 
+// eDAR Accident vector source (for popup info)
+const vectorSource_edar_accident = new VectorSource({
+  url: domain_name + 'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Av_edar_accident&maxFeatures=50000&outputFormat=application%2Fjson',
+  format: new GeoJSON(),
+  crossOrigin: 'anonymous',
+});
 
 
 //road_end_point
@@ -1604,6 +1639,19 @@ const vectorSource_bridge = new VectorSource({
   crossOrigin: 'anonymous',
 });
 
+const edar_accident_layer = new VectorLayer({
+  source: vectorSource_edar_accident,
+  style: new Style({
+    image: new CircleStyle({
+      radius: 7,
+      fill: new Fill({ color: 'rgba(220, 20, 60, 0.85)' }),
+      stroke: new Stroke({ color: 'darkred', width: 1.5 }),
+    }),
+  }),
+  visible: false,
+  opacity: 0.1,
+});
+
 //Road Accident
 const vectorSource_roadaccident = new VectorSource({
   url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Aroad_accident&maxFeatures=50000&outputFormat=application%2Fjson',
@@ -1616,6 +1664,14 @@ const vectorSource_balckspot = new VectorSource({
   format: new GeoJSON(),
   crossOrigin: 'anonymous',
 })
+
+// eDAR Black Spot — vector source
+const vectorSource_edar_black_spot = new VectorSource({
+  url: domain_name + 'ows?service=WFS&version=1.0.0&request=GetFeature' +
+       '&typeName=megrams%3Av_edar_black_spot&maxFeatures=50000&outputFormat=application%2Fjson',
+  format: new GeoJSON(),
+  crossOrigin: 'anonymous',
+});
 
 const vectorSource_gridaccident = new VectorSource({
   url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Arsis_grid_table&maxFeatures=50000&outputFormat=application%2Fjson',
@@ -2224,6 +2280,23 @@ const nh_layer=new VectorLayer({
 })
 
 
+
+// eDAR Black Spot — vector layer
+const edar_black_spot_layer = new VectorLayer({
+  source: vectorSource_edar_black_spot,
+  style: new Style({
+    stroke: new Stroke({ color: '#8B0000', width: 5 }),
+    fill:   new Fill({   color: 'rgba(220, 20, 60, 0.15)' }),
+    image: new CircleStyle({
+      radius: 7,
+      fill: new Fill({ color: 'rgba(220, 20, 60, 0.85)' }),
+      stroke: new Stroke({ color: 'darkred', width: 1.5 }),
+    }),
+  }),
+  visible: false,
+});
+
+
 // nh_layer theme
 const nh_layer_theme = new ImageLayer({
   source: nh_layer_theme_source,
@@ -2735,6 +2808,9 @@ layers.push(road_end_theme);
 layers.push(bridge_cat_theme);
 layers.push(bridge_layer);
 
+layers.push(edar_accident_theme);
+layers.push(edar_accident_layer);
+
 layers.push(roadaccident_theme);
 layers.push(roadaccident_layer);
 
@@ -2791,6 +2867,9 @@ layers.push(work_status_layer);
 
 layers.push(facilities_theme);
 layers.push(facilities_layer);
+
+layers.push(edar_black_spot_theme);
+layers.push(edar_black_spot_layer);
 
 layers.push(black_spot_theme);
 layers.push(black_spot_layer);
@@ -3789,6 +3868,431 @@ gridaccident.onclick = function (e){
   gridAccident();
 }
 
+
+
+// ==========================================================
+// eDAR Black Spot — checkbox & info-button handlers
+// ==========================================================
+const edarBlackSpotCheckbox = document.getElementById('edar_black_spot');
+const edarBlackSpotInfoBtn  = document.getElementById('edarBlackSpotInfoBtn');
+// ==========================================================
+// eDAR Black Spot — Download button
+// ==========================================================
+const edarBlackSpotDownloadBtn = document.getElementById('edarBlackSpotDownloadBtn');
+
+if (edarBlackSpotDownloadBtn) {
+  edarBlackSpotDownloadBtn.onclick = function () {
+
+    const btn = this;
+    const oldHtml = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Fetching schema...';
+
+    const typeName = 'megrams:v_edar_black_spot';
+
+    // Respect currently applied division filter (if any)
+    const divisionVal = document.getElementById('division_sel').value;
+    const cqlFilter =
+      (divisionVal && divisionVal !== "NA")
+        ? `rams_division='${divisionVal}'`
+        : '';
+
+    console.log('📥 eDAR Black Spot download | CQL:', cqlFilter || '(none)');
+
+    // ---- 1. DescribeFeatureType to discover attribute names ----
+    const describeUrl =
+      domain_name +
+      'ows?service=WFS&version=1.0.0&request=DescribeFeatureType' +
+      '&typeName=' + encodeURIComponent(typeName);
+
+    fetch(describeUrl)
+      .then(function (res) {
+        if (!res.ok) throw new Error('DescribeFeatureType HTTP ' + res.status);
+        return res.text();
+      })
+      .then(function (xsdText) {
+
+        // ---- 2. Parse schema, skip geometry ----
+        const parser  = new DOMParser();
+        const xmlDoc  = parser.parseFromString(xsdText, 'text/xml');
+
+        if (xmlDoc.getElementsByTagName('parsererror').length > 0 ||
+            xmlDoc.getElementsByTagName('ExceptionReport').length > 0) {
+          throw new Error('Could not parse layer schema');
+        }
+
+        let allElements = xmlDoc.getElementsByTagName('xsd:element');
+        if (allElements.length === 0) {
+          allElements = xmlDoc.getElementsByTagName('element');
+        }
+        if (allElements.length === 0) {
+          throw new Error('No <element> tags in schema response');
+        }
+
+        const attrNames = [];
+
+        for (let i = 0; i < allElements.length; i++) {
+          const el   = allElements[i];
+          const name = el.getAttribute('name');
+          const type = el.getAttribute('type') || '';
+          if (!name) continue;
+
+          if (el.getAttribute('minOccurs') === null &&
+              el.getAttribute('maxOccurs') === null) continue;
+
+          const typeLower = type.toLowerCase();
+          const isGeometry =
+            typeLower.indexOf('gml:') === 0 ||
+            typeLower.indexOf('geometry') > -1 ||
+            typeLower.indexOf('point') > -1 ||
+            typeLower.indexOf('line') > -1 ||
+            typeLower.indexOf('polygon') > -1 ||
+            typeLower.indexOf('surface') > -1 ||
+            typeLower.indexOf('curve') > -1;
+          if (isGeometry) continue;
+
+          const nameLower = name.toLowerCase();
+          if (nameLower === 'geom' || nameLower === 'geometry' ||
+              nameLower === 'the_geom' || nameLower === 'shape' ||
+              nameLower === 'wkb_geometry' || nameLower === 'geom_gml') continue;
+
+          attrNames.push(name);
+        }
+
+        if (attrNames.length === 0) {
+          throw new Error('No attribute fields detected');
+        }
+
+        console.log('✅ eDAR Black Spot columns:', attrNames);
+        btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Downloading ' + attrNames.length + ' columns...';
+
+        // ---- 3. Fetch CSV with propertyName (no geometry) ----
+        const propertyList = attrNames.join(',');
+
+        let csvUrl =
+          domain_name +
+          'ows?service=WFS&version=1.0.0&request=GetFeature' +
+          '&typeName=' + encodeURIComponent(typeName) +
+          '&propertyName=' + encodeURIComponent(propertyList) +
+          '&outputFormat=csv';
+
+        if (cqlFilter) {
+          csvUrl += '&CQL_FILTER=' + encodeURIComponent(cqlFilter);
+        }
+
+        console.log('📥 eDAR Black Spot download URL:', csvUrl);
+
+        return fetch(csvUrl)
+          .then(function (res) {
+            if (!res.ok) throw new Error('WFS HTTP ' + res.status);
+            return res.text();
+          })
+          .then(function (csvText) {
+
+            const head = csvText.substring(0, 300).toLowerCase();
+            if (head.indexOf('<?xml') === 0 || head.indexOf('exceptionreport') > -1) {
+              throw new Error('GeoServer WFS error — check CQL or field names');
+            }
+            if (!csvText || csvText.trim().length === 0) {
+              throw new Error('Empty CSV response');
+            }
+
+            const lines = csvText.split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+            const rowCount = Math.max(0, lines.length - 1);
+
+            if (rowCount === 0) {
+              alert('No black spot data found' + (cqlFilter ? ' for the selected filter.' : '.'));
+              return;
+            }
+
+            // ---- 4. Download with UTF-8 BOM ----
+            const blob   = new Blob(['\uFEFF' + csvText], { type: 'text/csv;charset=utf-8;' });
+            const objUrl = URL.createObjectURL(blob);
+
+            const divPart = (divisionVal && divisionVal !== 'NA') ? divisionVal : 'AllDivisions';
+
+            const a = document.createElement('a');
+            a.href     = objUrl;
+            a.download = 'edar_black_spot_' + divPart + '_' + rowCount + 'rows.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(objUrl);
+
+            console.log('✅ eDAR Black Spot CSV downloaded:', rowCount, 'rows,', attrNames.length, 'columns');
+          });
+      })
+      .catch(function (err) {
+        console.error('eDAR Black Spot download failed:', err);
+        alert('Download failed:\n' + err.message);
+      })
+      .then(function () {          // "finally" — works in all browsers
+        btn.disabled = false;
+        btn.innerHTML = oldHtml;
+      });
+  };
+}
+
+// ---- Checkbox → load / unload layer ----
+edarBlackSpotCheckbox.onclick = function () {
+  edarBlackSpotView();
+};
+
+// ---- Info button → open "How it works" modal ----
+edarBlackSpotInfoBtn.onclick = function (e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  const modalEl = document.getElementById('edarBlackSpotInfoModal');
+  bootstrap.Modal.getOrCreateInstance(modalEl).show();
+};
+
+
+// ==========================================================
+// eDAR Accident: checkbox → load current year immediately
+// ==========================================================
+const edarYearSelect  = document.getElementById('edarYearSelect');
+const edarApplyBtn    = document.getElementById('edarApplyBtn');
+const edarDownloadBtn = document.getElementById('edarDownloadBtn');
+const edarFilterBtn   = document.getElementById('edarFilterBtn');
+
+// Populate year dropdown (2022 → current year)
+function populateEdarYears() {
+  const currentYear = new Date().getFullYear();
+  edarYearSelect.innerHTML = '';
+  for (let y = 2022; y <= currentYear; y++) {
+    const opt = document.createElement('option');
+    opt.value = y;
+    opt.textContent = y;
+    edarYearSelect.appendChild(opt);
+  }
+  edarYearSelect.value = edarSelectedYear;
+
+  // Restore road category dropdown
+  const roadCatSelect = document.getElementById('edarRoadCatSelect');
+  if (roadCatSelect) {
+    roadCatSelect.value = edarSelectedRoadCategory || 'ALL';
+  }
+}
+
+// ---- Checkbox → load with current year ----
+edar_accident.onclick = function (e) {
+  if (edar_accident.checked) {
+    // Always default to current year when first checked
+    edarSelectedYear = new Date().getFullYear();
+  }
+  edarAccidentView();
+};
+
+// ---- Filter button → open modal ----
+edarFilterBtn.onclick = function (e) {
+  e.preventDefault();
+  e.stopPropagation();
+
+  // If checkbox not checked, check it first (so layer loads)
+  if (!edar_accident.checked) {
+    edar_accident.checked = true;
+    edarSelectedYear = new Date().getFullYear();
+    edarAccidentView();
+  }
+
+  populateEdarYears();
+  const modalEl = document.getElementById('edarAccidentModal');
+  bootstrap.Modal.getOrCreateInstance(modalEl).show();
+};
+
+// ---- Apply button → change year + refresh layer ----
+edarApplyBtn.onclick = function () {
+  const year    = edarYearSelect.value;
+  const roadCat = document.getElementById('edarRoadCatSelect').value;
+
+  console.log("✅ APPLY CLICKED | year:", year, "| roadCat:", roadCat);
+
+  if (!year) { alert('Please select a year.'); return; }
+
+  edarSelectedYear = year;
+  edarSelectedRoadCategory = roadCat;   // ← THE MISSING LINE
+
+  edar_accident.checked = true;
+  edarAccidentView();
+
+  const modalEl = document.getElementById('edarAccidentModal');
+  bootstrap.Modal.getInstance(modalEl)?.hide();
+};
+
+// ---- Download button → fetch ALL attributes (except geometry) dynamically ----
+edarDownloadBtn.onclick = function () {
+
+  const btn = this;
+  const oldHtml = btn.innerHTML;
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Fetching schema...';
+
+  // ---- 1. Build filter — use YEAR from the DROPDOWN, not the applied year ----
+  const divisionVal = document.getElementById('division_sel').value;
+
+  // Read the year the user selected in the modal dropdown
+  const year = edarYearSelect.value || edarSelectedYear || new Date().getFullYear();
+
+  let cqlFilter = "Year='" + year + "'";
+  if (divisionVal && divisionVal !== "NA") {
+    cqlFilter += " and rams_division='" + divisionVal + "'";
+  }
+
+  const typeName = 'megrams:v_edar_accident';
+
+  console.log('📥 Download using CQL:', cqlFilter, '| Year:', year);
+
+  // ---- 2. Use DescribeFeatureType to discover ALL attributes ----
+  const describeUrl =
+    domain_name +
+    'ows?service=WFS&version=1.0.0&request=DescribeFeatureType' +
+    '&typeName=' + encodeURIComponent(typeName);
+
+  fetch(describeUrl)
+    .then(function (res) {
+      if (!res.ok) throw new Error('DescribeFeatureType HTTP ' + res.status);
+      return res.text();
+    })
+    .then(function (xsdText) {
+
+      // ---- 3. Parse XML to extract attribute names (skip geometry) ----
+      const parser  = new DOMParser();
+      const xmlDoc  = parser.parseFromString(xsdText, 'text/xml');
+
+      if (xmlDoc.getElementsByTagName('parsererror').length > 0 ||
+          xmlDoc.getElementsByTagName('ExceptionReport').length > 0) {
+        throw new Error('Could not parse layer schema — check layer name');
+      }
+
+      const allElements = xmlDoc.getElementsByTagName('xsd:element');
+      const attrNames   = [];
+
+      for (let i = 0; i < allElements.length; i++) {
+        const el       = allElements[i];
+        const name     = el.getAttribute('name');
+        const type     = el.getAttribute('type') || '';
+
+        if (!name) continue;
+
+        if (el.getAttribute('minOccurs') === null &&
+            el.getAttribute('maxOccurs') === null) {
+          continue;
+        }
+
+        const typeLower = type.toLowerCase();
+        const isGeometry =
+          typeLower.indexOf('gml:') === 0 ||
+          typeLower.indexOf('geometry') > -1 ||
+          typeLower.indexOf('point') > -1 ||
+          typeLower.indexOf('line') > -1 ||
+          typeLower.indexOf('polygon') > -1 ||
+          typeLower.indexOf('multisurface') > -1 ||
+          typeLower.indexOf('multicurve') > -1 ||
+          typeLower.indexOf('multipoint') > -1 ||
+          typeLower.indexOf('multilinestring') > -1 ||
+          typeLower.indexOf('multipolygon') > -1;
+
+        if (isGeometry) continue;
+
+        const nameLower = name.toLowerCase();
+        if (nameLower === 'geom' || nameLower === 'geometry' ||
+            nameLower === 'the_geom' || nameLower === 'shape' ||
+            nameLower === 'wkb_geometry') {
+          continue;
+        }
+
+        attrNames.push(name);
+      }
+
+      if (attrNames.length === 0) {
+        throw new Error('No attributes found in layer schema');
+      }
+
+      console.log('✅ Detected attributes:', attrNames);
+
+      btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Downloading ' + attrNames.length + ' columns...';
+
+      // ---- 4. Fetch CSV with dynamic propertyName ----
+      const propertyList = attrNames.join(',');
+
+      const csvUrl =
+        domain_name +
+        'ows?service=WFS&version=1.0.0&request=GetFeature' +
+        '&typeName=' + encodeURIComponent(typeName) +
+        '&propertyName=' + encodeURIComponent(propertyList) +
+        '&CQL_FILTER=' + encodeURIComponent(cqlFilter) +
+        '&outputFormat=csv';
+
+      console.log('eDAR download URL:', csvUrl);
+
+      return fetch(csvUrl)
+        .then(function (res) {
+          if (!res.ok) throw new Error('WFS HTTP ' + res.status);
+          return res.text();
+        })
+        .then(function (csvText) {
+
+          // ---- 5. Sanity checks ----
+          const head = csvText.substring(0, 300).toLowerCase();
+          if (head.indexOf('<?xml') === 0 || head.indexOf('exceptionreport') > -1) {
+            throw new Error('GeoServer WFS error — check CQL filter or field names');
+          }
+
+          if (!csvText || csvText.trim().length === 0) {
+            throw new Error('Empty CSV response');
+          }
+
+          // ---- 6. Row count ----
+          const lines = csvText.split(/\r?\n/).filter(function (l) { return l.trim() !== ''; });
+          const rowCount = Math.max(0, lines.length - 1);
+
+          if (rowCount === 0) {
+            alert(
+              'No data found for the selected filter.\n\n' +
+              'Year: ' + year + '\n' +
+              'Division: ' + divisionVal + '\n\n' +
+              'Filter: ' + cqlFilter
+            );
+            return;
+          }
+
+          // ---- 7. Add BOM + download ----
+          const blob   = new Blob(['\uFEFF' + csvText], { type: 'text/csv;charset=utf-8;' });
+          const objUrl = URL.createObjectURL(blob);
+
+          const yearPart = year || 'all';
+          const divPart  = (divisionVal && divisionVal !== 'NA') ? divisionVal : 'AllDivisions';
+
+          const a = document.createElement('a');
+          a.href     = objUrl;
+          a.download = 'edar_accident_' + yearPart + '_' + divPart + '_' + rowCount + 'rows.csv';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(objUrl);
+
+          console.log('✅ CSV downloaded:', rowCount, 'rows,', attrNames.length, 'columns');
+
+          // alert(
+          //   'Downloaded ' + rowCount + ' rows (' + attrNames.length + ' columns).\n' +
+          //   'Year: ' + yearPart + '\n' +
+          //   'Division: ' + divPart
+          // );
+        });
+    })
+    .catch(function (err) {
+      console.error('eDAR download failed:', err);
+      alert('Download failed:\n' + err.message);
+    })
+    .finally(function () {
+      btn.disabled = false;
+      btn.innerHTML = oldHtml;
+    });
+};
+
 let uploadedLayer = null; // store uploaded vector layer
 
 uploadBtn.onclick = function (e){
@@ -3962,6 +4466,8 @@ division_new.onchange=function(e) {
   calamityView();
   calamityStatusView();
   amenitiesView();
+  edarAccidentView();
+  edarBlackSpotView();
   //blackSpotView();
 }
 
@@ -7150,6 +7656,214 @@ function gridAccident(){
 }
 
 
+// ==========================================================
+// eDAR Accident Layer — with Year Filter
+// ==========================================================
+let edarSelectedYear = new Date().getFullYear();   // default = current year
+let edarSelectedRoadCategory = "ALL"; 
+const edarAccidentCheckbox = document.getElementById('edar_accident');
+
+function edarAccidentView() {
+
+  // ---------- UNCHECK: hide & cleanup ----------
+  if (!edarAccidentCheckbox.checked) {
+    edar_accident_layer.setVisible(false);
+    edar_accident_theme.setVisible(false);
+
+    if (document.body.contains((document.getElementById("edar_accident_root"))) == false) {
+    } else {
+      document.getElementById("edar_accident_root").remove();
+      document.getElementById("edar_accident_image").style.display = "none";
+    }
+    return;
+  }
+
+  // ---------- CHECKED: apply with year + road classification filter ----------
+  const divisionVal = document.getElementById('division_sel').value;
+  const yearFilter  = `Year='${edarSelectedYear}'`;
+
+  // Build the road-classification part (only if user picked a specific category)
+  const roadCatFilter =
+    (typeof edarSelectedRoadCategory !== 'undefined' &&
+     edarSelectedRoadCategory &&
+     edarSelectedRoadCategory !== 'ALL')
+      ? ` and Road_Classification='${edarSelectedRoadCategory}'`
+      : '';
+
+  if (document.body.contains((document.getElementById("edar_accident_root"))) == false) {
+  } else {
+    document.getElementById("edar_accident_root").remove();
+    document.getElementById("edar_accident_image").style.display = "none";
+  }
+  document.getElementById("edar_accident_image").style.display = "block";
+
+  if (divisionVal == "NA") {
+
+    // ---- Division NA ----
+    const cqlNa = yearFilter + roadCatFilter;
+
+    if (vectorSource_edar_accident.getUrl()) {
+      vectorSource_edar_accident.clear();
+      vectorSource_edar_accident.refresh();
+    }
+
+    vectorSource_edar_accident.setUrl(
+      domain_name + "ows?service=WFS&version=1.0.0&request=GetFeature" +
+      "&typeName=megrams%3Av_edar_accident&maxFeatures=50000" +
+      "&outputFormat=application%2Fjson" +
+      "&CQL_FILTER=" + cqlNa
+    );
+    attachLoadingEvents(vectorSource_edar_accident);
+
+    edar_accident_theme_source = new ImageWMS({
+      url: domain_name + 'wms',
+      params: { "LAYERS": 'megrams:v_edar_accident', "CQL_FILTER": cqlNa },
+      ratio: 1,
+      crossOrigin: 'anonymous',
+      serverType: 'geoserver',
+    });
+    attachLoadingEvents(edar_accident_theme_source);
+
+    edar_accident_theme.setSource(edar_accident_theme_source);
+
+    edar_accident_layer.setVisible(true);
+    edar_accident_layer.setOpacity(0.1);
+    edar_accident_theme.setVisible(true);
+
+    const resolution = map.getView().getResolution();
+    updateLegend(
+      edar_accident_theme.getSource().getLegendUrl(resolution),
+      'edar_accident',
+      'Road Accident'
+    );
+
+  } else {
+
+    // ---- Division selected ----
+    const cqlWithDivision = yearFilter + " and rams_division='" + divisionVal + "'" + roadCatFilter;
+
+    if (vectorSource_edar_accident.getUrl()) {
+      vectorSource_edar_accident.clear();
+      vectorSource_edar_accident.refresh();
+    }
+
+    vectorSource_edar_accident.setUrl(
+      domain_name + "ows?service=WFS&version=1.0.0&request=GetFeature" +
+      "&typeName=megrams%3Av_edar_accident&maxFeatures=50000" +
+      "&outputFormat=application%2Fjson" +
+      "&CQL_FILTER=" + cqlWithDivision
+    );
+    attachLoadingEvents(vectorSource_edar_accident);
+
+    edar_accident_theme_source = new ImageWMS({
+      url: domain_name + 'wms',
+      params: { "LAYERS": 'megrams:v_edar_accident', "CQL_FILTER": cqlWithDivision },
+      ratio: 1,
+      crossOrigin: 'anonymous',
+      serverType: 'geoserver',
+    });
+    attachLoadingEvents(edar_accident_theme_source);
+
+    edar_accident_theme.setSource(edar_accident_theme_source);
+
+    edar_accident_layer.setVisible(true);
+    edar_accident_layer.setOpacity(0.1);
+    edar_accident_theme.setVisible(true);
+
+    const resolution = map.getView().getResolution();
+    updateLegend(
+      edar_accident_theme.getSource().getLegendUrl(resolution),
+      'edar_accident',
+      'Road Accident'
+    );
+  }
+}
+
+
+
+
+
+// ==========================================================
+// eDAR Black Spot Layer
+// ==========================================================
+function edarBlackSpotView() {
+
+  const chk = document.getElementById('edar_black_spot');
+
+  // ---------- UNCHECK: hide & cleanup ----------
+  if (!chk.checked) {
+    edar_black_spot_layer.setVisible(false);
+    edar_black_spot_theme.setVisible(false);
+
+    if (document.body.contains((document.getElementById("edar_black_spot_root"))) == false) {
+    } else {
+      document.getElementById("edar_black_spot_root").remove();
+      document.getElementById("edar_black_spot_image").style.display = "none";
+    }
+    return;
+  }
+
+  // ---------- CHECKED: apply division filter if selected ----------
+  const divisionVal = document.getElementById('division_sel').value;
+
+  const cqlFilter =
+    (divisionVal && divisionVal !== "NA")
+      ? `rams_division='${divisionVal}'`
+      : '';
+
+  // Remove old legend image (if any)
+  if (document.body.contains((document.getElementById("edar_black_spot_root"))) == false) {
+  } else {
+    document.getElementById("edar_black_spot_root").remove();
+    document.getElementById("edar_black_spot_image").style.display = "none";
+  }
+  document.getElementById("edar_black_spot_image").style.display = "block";
+
+  // ---- Vector source ----
+  if (vectorSource_edar_black_spot.getUrl()) {
+    vectorSource_edar_black_spot.clear();
+    vectorSource_edar_black_spot.refresh();
+  }
+
+  let wfsUrl =
+    domain_name + "ows?service=WFS&version=1.0.0&request=GetFeature" +
+    "&typeName=megrams%3Av_edar_black_spot&maxFeatures=50000" +
+    "&outputFormat=application%2Fjson";
+
+  if (cqlFilter) {
+    wfsUrl += "&CQL_FILTER=" + encodeURIComponent(cqlFilter);
+  }
+
+  vectorSource_edar_black_spot.setUrl(wfsUrl);
+  attachLoadingEvents(vectorSource_edar_black_spot);
+
+  // ---- WMS theme ----
+  edar_black_spot_theme_source = new ImageWMS({
+    url: domain_name + 'wms',
+    params: {
+      "LAYERS": 'megrams:v_edar_black_spot',
+      "CQL_FILTER": cqlFilter || ""
+    },
+    ratio: 1,
+    crossOrigin: 'anonymous',
+    serverType: 'geoserver',
+  });
+  attachLoadingEvents(edar_black_spot_theme_source);
+
+  edar_black_spot_theme.setSource(edar_black_spot_theme_source);
+
+  edar_black_spot_layer.setVisible(true);
+  edar_black_spot_layer.setOpacity(0.9);
+  edar_black_spot_theme.setVisible(true);
+
+  // ---- Legend ----
+  const resolution = map.getView().getResolution();
+  updateLegend(
+    edar_black_spot_theme.getSource().getLegendUrl(resolution),
+    'edar_black_spot',
+    'Black Spot'
+  );
+}
 
 // function workstatusView(){
 
@@ -8076,6 +8790,62 @@ selectedFeatures.on(['add', 'remove'], function () {
             roadname="<table><tr><td>Staus: </td><td>"+status+"</td></tr><tr><td>"+"Project Id: </td><td>"+project_id+"</td></tr></table>";
           
           }
+        else if (assetclicked.startsWith('v_edar_accident')) {
+
+          var acc_id          = feature.get('Accident_ID');
+          var acc_district    = feature.get('District');
+          var acc_division    = feature.get('rams_division');
+          var acc_road_code   = feature.get('Road_Code');
+          var acc_road_name   = feature.get('rams_road_name');
+          var acc_road_cat    = feature.get('rams_road_category');
+          var acc_road_num    = feature.get('rams_road_number');
+          var acc_road_length = feature.get('rams_road_longth');
+          var acc_datetime    = feature.get('Accident_DateTime');
+          var acc_severity    = feature.get('Severity');
+          var acc_police      = feature.get('Police Station');
+          var acc_fir         = feature.get('FIR_Number');
+          var acc_officer     = feature.get('Field Officer');
+          var acc_station_add = feature.get('Station_Address');
+          var acc_lat         = feature.get('Latitude');
+          var acc_lon         = feature.get('Longitude');
+          var acc_coll_type   = feature.get('Collision_Type');
+          var acc_coll_nature = feature.get('Collision_Nature');
+          var acc_desc        = feature.get('Accident_Description');
+
+          // Pretty-format datetime and road length
+          var acc_datetime_fmt = acc_datetime
+              ? String(acc_datetime).replace('T',' ').replace('Z','')
+              : '';
+
+          var acc_road_length_fmt =
+              (acc_road_length != null && !isNaN(acc_road_length))
+                ? Number(acc_road_length).toFixed(3)
+                : acc_road_length;
+
+          roadname =
+            "<table>" +
+              (acc_id           ? "<tr><td>Accident ID: </td><td>"        + acc_id           + "</td></tr>" : "") +
+              (acc_district     ? "<tr><td>District: </td><td>"           + acc_district     + "</td></tr>" : "") +
+              (acc_division     ? "<tr><td>Division: </td><td>"           + acc_division     + "</td></tr>" : "") +
+              (acc_road_code    ? "<tr><td>Road Code: </td><td>"          + acc_road_code    + "</td></tr>" : "") +
+              (acc_road_name    ? "<tr><td>Road Name: </td><td>"          + acc_road_name    + "</td></tr>" : "") +
+              (acc_road_cat     ? "<tr><td>Road Category: </td><td>"      + acc_road_cat     + "</td></tr>" : "") +
+              (acc_road_num     ? "<tr><td>Road Number: </td><td>"        + acc_road_num     + "</td></tr>" : "") +
+              (acc_road_length_fmt != null && acc_road_length_fmt !== ''
+                                ? "<tr><td>Road Length (km): </td><td>"   + acc_road_length_fmt + "</td></tr>" : "") +
+              (acc_datetime_fmt ? "<tr><td>Accident Date/Time: </td><td>" + acc_datetime_fmt + "</td></tr>" : "") +
+              (acc_severity     ? "<tr><td>Severity: </td><td>"           + acc_severity     + "</td></tr>" : "") +
+              (acc_police       ? "<tr><td>Police Station: </td><td>"     + acc_police       + "</td></tr>" : "") +
+              (acc_fir          ? "<tr><td>FIR Number: </td><td>"         + acc_fir          + "</td></tr>" : "") +
+              (acc_officer      ? "<tr><td>Field Officer: </td><td>"      + acc_officer      + "</td></tr>" : "") +
+              (acc_station_add  ? "<tr><td>Station Address: </td><td>"    + acc_station_add  + "</td></tr>" : "") +
+              (acc_lat          ? "<tr><td>Latitude: </td><td>"           + acc_lat          + "</td></tr>" : "") +
+              (acc_lon          ? "<tr><td>Longitude: </td><td>"          + acc_lon          + "</td></tr>" : "") +
+              (acc_coll_type    ? "<tr><td>Collision Type: </td><td>"     + acc_coll_type    + "</td></tr>" : "") +
+              (acc_coll_nature  ? "<tr><td>Collision Nature: </td><td>"   + acc_coll_nature  + "</td></tr>" : "") +
+              (acc_desc         ? "<tr><td>Description: </td><td>"        + acc_desc         + "</td></tr>" : "") +
+            "</table>";
+        }
 
     return roadname;
 
@@ -8149,6 +8919,16 @@ selectedFeatures.on(['add', 'remove'], function () {
                           "</table>";
 
 
+  }
+  else if (assetclicked.startsWith('v_edar_accident')) {
+
+    content.innerHTML =
+      '<p class="border" style=color:white;font-weight:bold;font-size:12px;background:#89a88d9e;margin-bottom:6px;>' +
+      names.join(', ') +
+      "<table class='border' style='width: 100%;background:#746a6a;'>" +
+      // Optional: add a report link if you have one, e.g.:
+      // "<tr><td><a style='color:white;font-weight:bold;' href='ReportController?mainkey=edaraccident&id=" + feature.get('edar_id') + "' target='_new'>Accident Report</a></td></tr>" +
+      "</table>";
   }
 
   // else   if (assetclicked.startsWith('v_meghalaya_pmgsy_roads')) {
