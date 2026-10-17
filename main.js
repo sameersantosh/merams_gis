@@ -2284,15 +2284,6 @@ const nh_layer=new VectorLayer({
 // eDAR Black Spot — vector layer
 const edar_black_spot_layer = new VectorLayer({
   source: vectorSource_edar_black_spot,
-  style: new Style({
-    stroke: new Stroke({ color: '#8B0000', width: 5 }),
-    fill:   new Fill({   color: 'rgba(220, 20, 60, 0.15)' }),
-    image: new CircleStyle({
-      radius: 7,
-      fill: new Fill({ color: 'rgba(220, 20, 60, 0.85)' }),
-      stroke: new Stroke({ color: 'darkred', width: 1.5 }),
-    }),
-  }),
   visible: false,
 });
 
@@ -4117,8 +4108,8 @@ edarApplyBtn.onclick = function () {
   edar_accident.checked = true;
   edarAccidentView();
 
-  const modalEl = document.getElementById('edarAccidentModal');
-  bootstrap.Modal.getInstance(modalEl)?.hide();
+  //const modalEl = document.getElementById('edarAccidentModal');
+  //bootstrap.Modal.getInstance(modalEl)?.hide();
 };
 
 // ---- Download button → fetch ALL attributes (except geometry) dynamically ----
@@ -4130,20 +4121,23 @@ edarDownloadBtn.onclick = function () {
   btn.disabled = true;
   btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Fetching schema...';
 
-  // ---- 1. Build filter — use YEAR from the DROPDOWN, not the applied year ----
+  // ---- 1. Build filter — use YEAR + ROAD CATEGORY from the dropdowns ----
   const divisionVal = document.getElementById('division_sel').value;
 
-  // Read the year the user selected in the modal dropdown
-  const year = edarYearSelect.value || edarSelectedYear || new Date().getFullYear();
+  const year    = edarYearSelect.value || edarSelectedYear || new Date().getFullYear();
+  const roadCat = (document.getElementById('edarRoadCatSelect')?.value) || 'ALL';
 
   let cqlFilter = "Year='" + year + "'";
   if (divisionVal && divisionVal !== "NA") {
     cqlFilter += " and rams_division='" + divisionVal + "'";
   }
+  if (roadCat && roadCat !== "ALL") {
+    cqlFilter += " and Road_Classification='" + roadCat + "'";
+  }
 
   const typeName = 'megrams:v_edar_accident';
 
-  console.log('📥 Download using CQL:', cqlFilter, '| Year:', year);
+  console.log('📥 Download using CQL:', cqlFilter, '| Year:', year, '| Road Cat:', roadCat);
 
   // ---- 2. Use DescribeFeatureType to discover ALL attributes ----
   const describeUrl =
@@ -4253,7 +4247,8 @@ edarDownloadBtn.onclick = function () {
             alert(
               'No data found for the selected filter.\n\n' +
               'Year: ' + year + '\n' +
-              'Division: ' + divisionVal + '\n\n' +
+              'Division: ' + divisionVal + '\n' +
+              'Road Category: ' + roadCat + '\n\n' +
               'Filter: ' + cqlFilter
             );
             return;
@@ -4265,22 +4260,17 @@ edarDownloadBtn.onclick = function () {
 
           const yearPart = year || 'all';
           const divPart  = (divisionVal && divisionVal !== 'NA') ? divisionVal : 'AllDivisions';
+          const catPart  = (roadCat && roadCat !== 'ALL') ? roadCat.replace(/\s+/g, '_') : 'AllCategories';
 
           const a = document.createElement('a');
           a.href     = objUrl;
-          a.download = 'edar_accident_' + yearPart + '_' + divPart + '_' + rowCount + 'rows.csv';
+          a.download = 'edar_accident_' + yearPart + '_' + divPart + '_' + catPart + '_' + rowCount + 'rows.csv';
           document.body.appendChild(a);
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(objUrl);
 
           console.log('✅ CSV downloaded:', rowCount, 'rows,', attrNames.length, 'columns');
-
-          // alert(
-          //   'Downloaded ' + rowCount + ' rows (' + attrNames.length + ' columns).\n' +
-          //   'Year: ' + yearPart + '\n' +
-          //   'Division: ' + divPart
-          // );
         });
     })
     .catch(function (err) {
@@ -7803,15 +7793,12 @@ function edarBlackSpotView() {
     return;
   }
 
-  // ---------- CHECKED: apply division filter if selected ----------
+  // ---------- CHECKED: build filter only if division is selected ----------
   const divisionVal = document.getElementById('division_sel').value;
+  const hasFilter   = (divisionVal && divisionVal !== "NA");
+  const cqlFilter   = hasFilter ? `rams_division='${divisionVal}'` : "";
 
-  const cqlFilter =
-    (divisionVal && divisionVal !== "NA")
-      ? `rams_division='${divisionVal}'`
-      : '';
-
-  // Remove old legend image (if any)
+  // Remove old legend
   if (document.body.contains((document.getElementById("edar_black_spot_root"))) == false) {
   } else {
     document.getElementById("edar_black_spot_root").remove();
@@ -7819,7 +7806,7 @@ function edarBlackSpotView() {
   }
   document.getElementById("edar_black_spot_image").style.display = "block";
 
-  // ---- Vector source ----
+  // ---- Vector source (WFS) ----
   if (vectorSource_edar_black_spot.getUrl()) {
     vectorSource_edar_black_spot.clear();
     vectorSource_edar_black_spot.refresh();
@@ -7830,20 +7817,22 @@ function edarBlackSpotView() {
     "&typeName=megrams%3Av_edar_black_spot&maxFeatures=50000" +
     "&outputFormat=application%2Fjson";
 
-  if (cqlFilter) {
+  if (hasFilter) {
     wfsUrl += "&CQL_FILTER=" + encodeURIComponent(cqlFilter);
   }
 
   vectorSource_edar_black_spot.setUrl(wfsUrl);
   attachLoadingEvents(vectorSource_edar_black_spot);
 
-  // ---- WMS theme ----
+  // ---- WMS theme: only add CQL_FILTER when a filter exists ----
+  const wmsParams = { "LAYERS": 'megrams:v_edar_black_spot' };
+  if (hasFilter) {
+    wmsParams["CQL_FILTER"] = cqlFilter;
+  }
+
   edar_black_spot_theme_source = new ImageWMS({
     url: domain_name + 'wms',
-    params: {
-      "LAYERS": 'megrams:v_edar_black_spot',
-      "CQL_FILTER": cqlFilter || ""
-    },
+    params: wmsParams,
     ratio: 1,
     crossOrigin: 'anonymous',
     serverType: 'geoserver',
@@ -7853,7 +7842,7 @@ function edarBlackSpotView() {
   edar_black_spot_theme.setSource(edar_black_spot_theme_source);
 
   edar_black_spot_layer.setVisible(true);
-  edar_black_spot_layer.setOpacity(0.9);
+  edar_black_spot_layer.setOpacity(1);
   edar_black_spot_theme.setVisible(true);
 
   // ---- Legend ----
