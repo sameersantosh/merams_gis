@@ -59,6 +59,7 @@ const video_src=document.getElementById('video_src');
 //const asset_image_list=document.getElementById('asset_image_list');
 const closer = document.getElementById('popup-closer');
 const checkbox_sh = document.getElementById('sh');
+const checkbox_pmgsy0 = document.getElementById('pmgsy0');
 const checkbox_pmgsy1 = document.getElementById('pmgsy1');
 const checkbox_pmgsy2 = document.getElementById('pmgsy2');
 
@@ -308,6 +309,14 @@ let sh_layer_theme_source= new ImageWMS({
   serverType: 'geoserver',
 });
 
+
+let pmgsy0_layer_theme_source= new ImageWMS({
+  url: domain_name+'wms',
+  params: { "LAYERS": 'megrams:v_meghalaya_pmgsy_roads'},
+  ratio: 1,
+  crossOrigin: 'anonymous',
+  serverType: 'geoserver',
+});
 
 let pmgsy1_layer_theme_source= new ImageWMS({
   url: domain_name+'wms',
@@ -945,6 +954,16 @@ function onChange() {
   }
 
 
+    /// PMGSY1 LAYER CHANGE
+  if(pmgsy0.checked)
+  {
+    pmgsy1View();
+  }
+  if(!pmgsy0.checked)
+  {
+    pmgsy1View();
+  }
+
    /// PMGSY1 LAYER CHANGE
   if(pmgsy1.checked)
   {
@@ -1447,6 +1466,13 @@ const vectorSource_ur = new VectorSource({
 //State Highway
 const vectorSource_sh = new VectorSource({
   url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Astate_highway&maxFeatures=50000&outputFormat=application%2Fjson',
+  format: new GeoJSON(),
+  crossOrigin: 'anonymous',
+});
+
+//PMGSY0 Highway
+const vectorSource_pmgsy0 = new VectorSource({
+  url: domain_name+'ows?service=WFS&version=1.0.0&request=GetFeature&typeName=megrams%3Av_meghalaya_pmgsy_roads&maxFeatures=50000&outputFormat=application%2Fjson',
   format: new GeoJSON(),
   crossOrigin: 'anonymous',
 });
@@ -2100,6 +2126,16 @@ const sh_layer = new VectorLayer({
 });
 
 
+const pmgsy0_layer = new VectorLayer({
+  source: vectorSource_pmgsy0,
+  style: new Style({
+    stroke: new Stroke({
+      width: 3,
+    }),
+  }),
+  visible: false,
+});
+
 const pmgsy1_layer = new VectorLayer({
   source: vectorSource_pmgsy1,
   style: new Style({
@@ -2178,6 +2214,12 @@ const sh_layer_theme = new ImageLayer({
   visible: false,
 });
 
+
+//pmgsy0 theme
+const pmgsy0_layer_theme = new ImageLayer({
+  source: pmgsy0_layer_theme_source,
+  visible: false,
+});
 
 //pmgsy1 theme
 const pmgsy1_layer_theme = new ImageLayer({
@@ -2749,6 +2791,9 @@ layers.push(road_search_layer);
 
 layers.push(sh_layer);
 layers.push(sh_layer_theme);
+
+layers.push(pmgsy0_layer);
+layers.push(pmgsy0_layer_theme);
 
 layers.push(pmgsy1_layer);
 layers.push(pmgsy1_layer_theme);
@@ -3713,6 +3758,10 @@ sh.onclick = function (e) {
   shView();
 }
 
+
+pmgsy0.onclick = function (e) {
+  pmgsy1View();
+}
 
 pmgsy1.onclick = function (e) {
   pmgsy1View();
@@ -4777,6 +4826,69 @@ function shView(){
 
 
 function pmgsy1View() {
+
+    // =====================================================
+    // PMGSY-0 -> PMGSY-I Roads
+    // =====================================================
+    if (pmgsy0.checked) {
+
+        document.getElementById("pmgsy0_image").style.display = "block";
+
+        if (vectorSource_pmgsy0.getUrl()) {
+            vectorSource_pmgsy0.clear();
+        }
+
+        vectorSource_pmgsy0.setUrl(
+            domain_name +
+            'ows?service=WFS&version=1.0.0&request=GetFeature' +
+            '&typeName=megrams%3Av_meghalaya_pmgsy_roads' +
+            '&maxFeatures=50000' +
+            '&outputFormat=application%2Fjson' +
+            '&CQL_FILTER=scheme_type%3D%27PMGSY-I%27'
+        );
+
+        vectorSource_pmgsy0.refresh();
+
+        attachLoadingEvents(vectorSource_pmgsy0);
+
+        pmgsy0_layer_theme_source = new ImageWMS({
+            url: domain_name + 'wms',
+            params: {
+                "LAYERS": "megrams:v_meghalaya_pmgsy_roads",
+                "CQL_FILTER": "scheme_type='PMGSY-I'"
+            },
+            ratio: 1,
+            crossOrigin: 'anonymous',
+            serverType: 'geoserver'
+        });
+
+        attachLoadingEvents(pmgsy0_layer_theme_source);
+
+        pmgsy0_layer_theme.setSource(pmgsy0_layer_theme_source);
+
+        pmgsy0_layer.setVisible(true);
+        pmgsy0_layer_theme.setVisible(true);
+
+        // Update PMGSY-0 legend
+        updatePmgsyLegend(
+            pmgsy0_layer_theme,
+            "pmgsy0",
+            "PMGSY-I Roads"
+        );
+
+    } else {
+
+        pmgsy0_layer.setVisible(false);
+        pmgsy0_layer_theme.setVisible(false);
+
+        document.getElementById("pmgsy0_image").style.display = "none";
+
+        // Remove PMGSY-0 legend
+        removePmgsyLegend("pmgsy0");
+
+        vectorSource_pmgsy0.clear();
+    }
+
 
     // =====================================================
     // PMGSY-I -> PMGSY-II Roads
